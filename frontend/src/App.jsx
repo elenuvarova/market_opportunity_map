@@ -13,6 +13,8 @@ import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
 import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
 import TourController from "./components/TourController";
+import PasteModal from "./components/PasteModal";
+import { saveCurrentData, clearCurrentData } from "./lib/sessionStore";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -23,6 +25,8 @@ export default function App() {
   const [activeDemoKey, setActiveDemoKey] = useState(null);
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [tourRunning, setTourRunning] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [dataSource, setDataSource] = useState(null); // "demo" | "csv" | "paste"
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInput = useRef(null);
 
@@ -33,9 +37,12 @@ export default function App() {
       const result = await loadDemoData(key);
       setData(result);
       const meta = DEMO_DATASETS.find((d) => d.key === key);
-      setSourceLabel(`Demo · ${meta?.label || key || "data"}`);
+      const label = `Demo · ${meta?.label || key || "data"}`;
+      setSourceLabel(label);
       setActiveDemoKey(key || null);
+      setDataSource("demo");
       setSelectedNode(null);
+      saveCurrentData(result, { source: "demo", datasetKey: key, label });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,7 +77,9 @@ export default function App() {
       setData(result);
       setSourceLabel(file.name);
       setActiveDemoKey(null);
+      setDataSource("csv");
       setSelectedNode(null);
+      saveCurrentData(result, { source: "csv", label: file.name });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -78,13 +87,26 @@ export default function App() {
     }
   };
 
+  const handlePasteResult = (result) => {
+    setData(result);
+    setSourceLabel("Pasted data");
+    setActiveDemoKey(null);
+    setDataSource("paste");
+    setSelectedNode(null);
+    setSelectedOpportunity(null);
+    setPasteOpen(false);
+    saveCurrentData(result, { source: "paste", label: "Pasted data" });
+  };
+
   const reset = () => {
     setData(null);
     setSourceLabel(null);
     setActiveDemoKey(null);
+    setDataSource(null);
     setSelectedNode(null);
     setSelectedOpportunity(null);
     setError(null);
+    clearCurrentData();
   };
 
   return (
@@ -112,6 +134,14 @@ export default function App() {
               </span>
             )}
             <FileUpload ref={fileInput} onFile={runUpload} disabled={loading} />
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setPasteOpen(true)}
+              disabled={loading}
+            >
+              Paste
+            </button>
             <button
               type="button"
               className="btn-secondary"
@@ -161,6 +191,26 @@ export default function App() {
             onPickFile={() => fileInput.current?.click()}
             loading={loading}
           />
+        )}
+
+        {data && dataSource === "paste" && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start justify-between gap-3">
+            <div>
+              <p className="font-medium">Rough graph from pasted input</p>
+              <p className="mt-0.5 text-amber-800/90 text-xs">
+                Scores are heuristic and competition intensity is derived from
+                how many competitors you named. For higher-fidelity analysis,
+                upload a CSV with the full schema.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPasteOpen(true)}
+              className="text-xs font-medium text-amber-900 hover:underline whitespace-nowrap"
+            >
+              Edit paste
+            </button>
+          </div>
         )}
 
         {data && (
@@ -231,6 +281,7 @@ export default function App() {
               opportunities={data.opportunities}
               onSelectOpportunity={setSelectedOpportunity}
               datasetKey={activeDemoKey}
+              briefSource={dataSource === "demo" ? "demo" : "session"}
             />
           </>
         )}
@@ -239,6 +290,7 @@ export default function App() {
       <ScoreBreakdownDrawer
         opportunity={selectedOpportunity}
         datasetKey={activeDemoKey}
+        briefSource={dataSource === "demo" ? "demo" : dataSource ? "session" : null}
         onClose={() => setSelectedOpportunity(null)}
       />
 
@@ -250,6 +302,12 @@ export default function App() {
           onClose={() => setTourRunning(false)}
         />
       )}
+
+      <PasteModal
+        open={pasteOpen}
+        onClose={() => setPasteOpen(false)}
+        onSubmit={handlePasteResult}
+      />
 
       <footer className="mx-auto max-w-7xl px-6 pb-10 pt-2 text-xs text-ink-muted">
         Market Opportunity Map · MVP build

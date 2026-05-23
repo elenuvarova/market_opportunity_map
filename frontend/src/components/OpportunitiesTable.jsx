@@ -29,7 +29,21 @@ function ScoreBar({ score }) {
   );
 }
 
-export default function OpportunitiesTable({ opportunities, onSelectOpportunity, datasetKey }) {
+export default function OpportunitiesTable({
+  opportunities,
+  onSelectOpportunity,
+  datasetKey,
+  briefSource,
+}) {
+  const briefUrlFor = (id) => {
+    if (briefSource === "demo" && datasetKey) {
+      return `/opportunity/${encodeURIComponent(id)}/brief?dataset=${encodeURIComponent(datasetKey)}`;
+    }
+    if (briefSource === "session") {
+      return `/opportunity/${encodeURIComponent(id)}/brief?source=session`;
+    }
+    return null;
+  };
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-3 border-b border-slate-200/70">
@@ -77,9 +91,9 @@ export default function OpportunitiesTable({ opportunities, onSelectOpportunity,
                   <td className="px-4 py-2.5">
                     <div className="flex flex-col items-start gap-1">
                       <span className={`chip ${d.color}`}>{d.label}</span>
-                      {datasetKey && (
+                      {briefUrlFor(o.id) && (
                         <a
-                          href={`/opportunity/${encodeURIComponent(o.id)}/brief?dataset=${encodeURIComponent(datasetKey)}`}
+                          href={briefUrlFor(o.id)}
                           target="_blank"
                           rel="noreferrer noopener"
                           onClick={(e) => e.stopPropagation()}

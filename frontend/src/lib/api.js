@@ -56,6 +56,14 @@ export function getOpportunityBrief(opportunityId, dataset) {
   return request(`/opportunities/${encodeURIComponent(opportunityId)}/brief${qs}`);
 }
 
+export function assembleFromPaste(payload) {
+  return request("/assemble", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export const DEMO_DATASETS = [
   {
     key: "product",

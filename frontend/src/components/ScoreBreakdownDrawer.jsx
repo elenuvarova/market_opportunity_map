@@ -109,7 +109,22 @@ function Signal({ signal }) {
   );
 }
 
-export default function ScoreBreakdownDrawer({ opportunity, datasetKey, onClose }) {
+function buildBriefUrl(id, datasetKey, briefSource) {
+  if (briefSource === "demo" && datasetKey) {
+    return `/opportunity/${encodeURIComponent(id)}/brief?dataset=${encodeURIComponent(datasetKey)}`;
+  }
+  if (briefSource === "session") {
+    return `/opportunity/${encodeURIComponent(id)}/brief?source=session`;
+  }
+  return null;
+}
+
+export default function ScoreBreakdownDrawer({
+  opportunity,
+  datasetKey,
+  briefSource,
+  onClose,
+}) {
   const { data, error, loading } = useBreakdown(opportunity, datasetKey);
 
   useEffect(() => {
@@ -220,10 +235,10 @@ export default function ScoreBreakdownDrawer({ opportunity, datasetKey, onClose 
               )}
             </div>
 
-            {data && datasetKey && (
+            {data && buildBriefUrl(data.id, datasetKey, briefSource) && (
               <footer className="border-t border-slate-200 px-5 py-3 bg-slate-50/50">
                 <a
-                  href={`/opportunity/${encodeURIComponent(data.id)}/brief?dataset=${encodeURIComponent(datasetKey)}`}
+                  href={buildBriefUrl(data.id, datasetKey, briefSource)}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="btn-primary w-full justify-center"

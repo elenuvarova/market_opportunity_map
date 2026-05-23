@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getOpportunityBrief } from "../lib/api";
 import { briefToMarkdown } from "../lib/markdown";
+import { loadCurrentData } from "../lib/sessionStore";
+import { computeBriefLocally } from "../lib/brief";
 
 const BUCKET_STYLES = {
   strong: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200",
@@ -95,6 +97,7 @@ export default function OpportunityBrief() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const dataset = searchParams.get("dataset");
+  const source = searchParams.get("source");
 
   const [brief, setBrief] = useState(null);
   const [error, setError] = useState(null);
@@ -104,11 +107,31 @@ export default function OpportunityBrief() {
   useEffect(() => {
     setLoading(true);
     setError(null);
+    if (source === "session") {
+      // Pasted or CSV data — read from this tab's sessionStorage and compute locally
+      const stash = loadCurrentData();
+      if (!stash?.data?.opportunities) {
+        setError(
+          "No data found in this tab. Open the brief from the dashboard where the data is loaded."
+        );
+        setLoading(false);
+        return;
+      }
+      const opp = stash.data.opportunities.find((o) => o.id === id);
+      if (!opp) {
+        setError(`Opportunity '${id}' not in current data.`);
+        setLoading(false);
+        return;
+      }
+      setBrief(computeBriefLocally(opp, stash.data.opportunities));
+      setLoading(false);
+      return;
+    }
     getOpportunityBrief(id, dataset)
       .then((b) => setBrief(b))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [id, dataset]);
+  }, [id, dataset, source]);
 
   const onCopyMarkdown = async () => {
     if (!brief) return;
