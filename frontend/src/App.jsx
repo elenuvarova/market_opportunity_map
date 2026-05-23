@@ -197,6 +197,7 @@ export default function App() {
             <OpportunitiesTable
               opportunities={data.opportunities}
               onSelectOpportunity={setSelectedOpportunity}
+              datasetKey={activeDemoKey}
             />
           </>
         )}

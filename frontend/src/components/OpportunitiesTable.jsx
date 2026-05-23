@@ -29,7 +29,7 @@ function ScoreBar({ score }) {
   );
 }
 
-export default function OpportunitiesTable({ opportunities, onSelectOpportunity }) {
+export default function OpportunitiesTable({ opportunities, onSelectOpportunity, datasetKey }) {
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-3 border-b border-slate-200/70">
@@ -75,7 +75,20 @@ export default function OpportunitiesTable({ opportunities, onSelectOpportunity 
                     <ScoreBar score={o.opportunity_score} />
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={`chip ${d.color}`}>{d.label}</span>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`chip ${d.color}`}>{d.label}</span>
+                      {datasetKey && (
+                        <a
+                          href={`/opportunity/${encodeURIComponent(o.id)}/brief?dataset=${encodeURIComponent(datasetKey)}`}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[11px] text-ink-soft hover:text-ink underline-offset-2 hover:underline"
+                        >
+                          Brief →
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

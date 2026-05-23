@@ -51,6 +51,11 @@ export function getOpportunityBreakdown(opportunityId, dataset) {
   return request(`/opportunities/${encodeURIComponent(opportunityId)}/breakdown${qs}`);
 }
 
+export function getOpportunityBrief(opportunityId, dataset) {
+  const qs = dataset ? `?dataset=${encodeURIComponent(dataset)}` : "";
+  return request(`/opportunities/${encodeURIComponent(opportunityId)}/brief${qs}`);
+}
+
 export const DEMO_DATASETS = [
   {
     key: "product",

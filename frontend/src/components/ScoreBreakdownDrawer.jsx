@@ -218,6 +218,22 @@ export default function ScoreBreakdownDrawer({ opportunity, datasetKey, onClose 
                 </>
               )}
             </div>
+
+            {data && datasetKey && (
+              <footer className="border-t border-slate-200 px-5 py-3 bg-slate-50/50">
+                <a
+                  href={`/opportunity/${encodeURIComponent(data.id)}/brief?dataset=${encodeURIComponent(datasetKey)}`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="btn-primary w-full justify-center"
+                >
+                  Generate brief →
+                </a>
+                <p className="mt-2 text-[11px] text-ink-muted text-center">
+                  Opens a print-friendly one-pager in a new tab
+                </p>
+              </footer>
+            )}
           </div>
         )}
       </aside>

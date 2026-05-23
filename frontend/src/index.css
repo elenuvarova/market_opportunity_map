@@ -11,6 +11,32 @@
   }
 }
 
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-hide {
+    display: none !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.75em;
+    color: #555;
+    word-break: break-all;
+  }
+}
+
 @layer components {
   .card {
     @apply bg-white rounded-2xl border border-slate-200/70 shadow-card;
