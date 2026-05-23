@@ -28,15 +28,16 @@ function competitiveLandscape(allOpportunities, segment) {
     }
     const bucket = byCompetitor.get(o.competitor);
     bucket.pains.add(o.pain_point);
+    if (o.feature) bucket.features.add(o.feature);
   }
 
   const items = [...byCompetitor.entries()].map(([competitor, b]) => ({
     competitor,
-    features_covered: [],
+    features_covered: [...b.features].sort(),
     pains_addressed: [...b.pains].sort(),
     pains_not_addressed: [...allPains].filter((p) => !b.pains.has(p)).sort(),
   }));
-  items.sort((a, b) => b.pains_addressed.length - a.pains_addressed.length);
+  items.sort((a, b) => b.features_covered.length - a.features_covered.length);
   return items.slice(0, 3);
 }
 

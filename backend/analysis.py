@@ -162,6 +162,23 @@ def find_opportunity_row(df: pd.DataFrame, opportunity_id: str) -> dict | None:
     return None
 
 
+def _enrich_sources(raw_sources: list) -> list[dict]:
+    out = []
+    for s in raw_sources or []:
+        if not isinstance(s, dict) or "url" not in s:
+            continue
+        url = str(s["url"])
+        out.append(
+            {
+                "url": url,
+                "source_type": source_type_from_url(url),
+                "note": str(s.get("note", "")),
+                "is_paraphrase": True,
+            }
+        )
+    return out
+
+
 def build_competitive_landscape(df: pd.DataFrame, segment: str, max_competitors: int = 3) -> list[dict]:
     """For a given segment, return the top competitors active there plus the
     pain points in that segment they don't appear next to. Used in the
@@ -412,23 +429,6 @@ def build_competitor_feature_matrix(df: pd.DataFrame) -> list[dict]:
     ]
 
 
-def _enrich_sources(raw_sources: list) -> list[dict]:
-    out = []
-    for s in raw_sources or []:
-        if not isinstance(s, dict) or "url" not in s:
-            continue
-        url = str(s["url"])
-        out.append(
-            {
-                "url": url,
-                "source_type": source_type_from_url(url),
-                "note": str(s.get("note", "")),
-                "is_paraphrase": True,
-            }
-        )
-    return out
-
-
 def build_opportunities(df: pd.DataFrame) -> list[dict]:
     """One row per opportunity id (slug of name). When the dataset
     cross-joins a pain across multiple competitors (common in pasted
@@ -446,6 +446,7 @@ def build_opportunities(df: pd.DataFrame) -> list[dict]:
             "segment": row["segment"],
             "pain_point": row["pain_point"],
             "competitor": row["competitor"],
+            "feature": row["feature"],
             "severity": int(row["severity"]),
             "willingness_to_pay": int(row["willingness_to_pay"]),
             "competition_intensity": int(row["competition_intensity"]),

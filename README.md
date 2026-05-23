@@ -191,7 +191,7 @@ Click **Paste** in the header. A modal with three tabs opens:
 
 Submit → backend assembles a minimal dataset and the dashboard renders against it. A yellow banner over the graph makes the lower fidelity explicit; the **Brief →** flow works on pasted opportunities too (with the pasted text as the supporting signal).
 
-Pasted data lives in your browser tab's `sessionStorage` only. No server-side persistence, no database. Reload preserves; close = lose.
+Pasted data lives in your browser tab's `sessionStorage` only. No server-side persistence, no database. Reloading the main page clears the dashboard — re-paste to restart. The brief page opened in a new tab inherits the snapshot at click time and stays readable independently.
 
 ## Local development
 
