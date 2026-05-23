@@ -12,7 +12,7 @@ import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
 import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
-import TourController from "./components/TourController";
+import TourController, { isTourAvailable } from "./components/TourController";
 import PasteModal from "./components/PasteModal";
 import { saveCurrentData, clearCurrentData } from "./lib/sessionStore";
 
@@ -50,17 +50,20 @@ export default function App() {
     }
   };
 
-  // Auto-start tour when the URL has ?tour=1 and the product dataset
-  // is loaded. We strip the param after starting so reloads don't re-fire.
+  // Auto-start tour when the URL has ?tour=<key> (or just ?tour=1, which
+  // we treat as "product"). We strip the param after starting so reloads
+  // don't re-fire.
   useEffect(() => {
-    if (searchParams.get("tour") !== "1") return;
-    if (!data) {
-      runDemo("product").then(() => {
-        // tour will fire on the next pass when data is set
-      });
+    const tourParam = searchParams.get("tour");
+    if (!tourParam) return;
+    const requestedKey =
+      tourParam === "1" ? "product" : isTourAvailable(tourParam) ? tourParam : null;
+    if (!requestedKey) return;
+    if (!data || activeDemoKey !== requestedKey) {
+      runDemo(requestedKey);
       return;
     }
-    if (activeDemoKey === "product" && !tourRunning) {
+    if (!tourRunning) {
       setTourRunning(true);
       const next = new URLSearchParams(searchParams);
       next.delete("tour");
@@ -156,7 +159,7 @@ export default function App() {
               loading={loading}
               activeKey={activeDemoKey}
             />
-            {data && activeDemoKey === "product" && !tourRunning && (
+            {data && isTourAvailable(activeDemoKey) && !tourRunning && (
               <button
                 type="button"
                 className="btn-secondary"
@@ -302,6 +305,7 @@ export default function App() {
       {tourRunning && data && (
         <TourController
           data={data}
+          datasetKey={activeDemoKey}
           onSelectNode={setSelectedNode}
           onSelectOpportunity={setSelectedOpportunity}
           onClose={() => setTourRunning(false)}
