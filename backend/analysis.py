@@ -5,6 +5,8 @@ from collections import Counter
 import networkx as nx
 import pandas as pd
 
+from sources import slugify, source_type_from_url
+
 REQUIRED_COLUMNS = [
     "segment",
     "pain_point",
@@ -61,6 +63,12 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["severity", "willingness_to_pay", "competition_intensity"]:
         df[col] = df[col].clip(lower=1, upper=10)
     df["evidence_count"] = df["evidence_count"].clip(lower=0)
+
+    if "sources" not in df.columns:
+        df["sources"] = [[] for _ in range(len(df))]
+    else:
+        df["sources"] = df["sources"].apply(lambda v: v if isinstance(v, list) else [])
+
     df = df.reset_index(drop=True)
     return df
 
@@ -211,12 +219,30 @@ def build_competitor_feature_matrix(df: pd.DataFrame) -> list[dict]:
     ]
 
 
+def _enrich_sources(raw_sources: list) -> list[dict]:
+    out = []
+    for s in raw_sources or []:
+        if not isinstance(s, dict) or "url" not in s:
+            continue
+        url = str(s["url"])
+        out.append(
+            {
+                "url": url,
+                "source_type": source_type_from_url(url),
+                "note": str(s.get("note", "")),
+                "is_paraphrase": True,
+            }
+        )
+    return out
+
+
 def build_opportunities(df: pd.DataFrame) -> list[dict]:
     ranked = df.sort_values("opportunity_score", ascending=False)
     out = []
     for _, row in ranked.iterrows():
         out.append(
             {
+                "id": slugify(row["opportunity"]),
                 "opportunity": row["opportunity"],
                 "segment": row["segment"],
                 "pain_point": row["pain_point"],
@@ -226,6 +252,7 @@ def build_opportunities(df: pd.DataFrame) -> list[dict]:
                 "competition_intensity": int(row["competition_intensity"]),
                 "evidence_count": int(row["evidence_count"]),
                 "opportunity_score": int(row["opportunity_score"]),
+                "sources": _enrich_sources(row.get("sources", [])),
             }
         )
     return out
@@ -234,6 +261,7 @@ def build_opportunities(df: pd.DataFrame) -> list[dict]:
 def build_matrix(df: pd.DataFrame) -> list[dict]:
     return [
         {
+            "id": slugify(row["opportunity"]),
             "opportunity": row["opportunity"],
             "segment": row["segment"],
             "x_competition": int(row["competition_intensity"]),

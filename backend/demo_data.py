@@ -2,26 +2,26 @@
 
 Each row is grounded in public signals: Reddit / HackerNews threads, Lenny's
 newsletter, NN/g, McKinsey/CareerKarma reports, vendor pricing pages, etc.
-Sources are listed in comments above each row. Scores follow this scale:
 
+Sources live as a structured `sources` list per row (url + paraphrase note);
+`source_type` is derived from the URL at runtime via sources.source_type_from_url.
+
+Score scale:
     severity            1 = mild annoyance, 8 = workflow blocker, 10 = blocks core goal
     willingness_to_pay  1 = won't pay, 5 = $20–50/mo, 7 = $50–150/mo, 9 = enterprise budget
-    competition_intensity  1 = no direct competitor, 8 = several established players, 10 = commoditized
+    competition_intensity  1 = no direct competitor, 8 = several established players
     evidence_count      honest count of distinct credible sources actually found
 
 Rows where evidence is thin (private communities, paywalled content) are
 flagged "directional" in the notes and given a lower evidence_count.
+
+Notes in the `sources` field are paraphrases of what each source shows, not
+literal quotes — they were captured during the research pass alongside the
+URLs and are marked is_paraphrase=True when surfaced through the API.
 """
 
 
 PRODUCT_ROWS = [
-    # Freelance designers · Canva
-    # sources:
-    #   https://medium.com/design-bootcamp/why-youre-losing-clients-as-a-freelance-designer-73122409bb56
-    #   https://alexberman.com/freelance-rate-graphic-designer
-    #   https://www.canva.com/pricing/
-    # notes: pain refined to designers' actual framing ("design as decoration");
-    #        WTP 5 reflects freelance ceiling (~$20–50/mo).
     {
         "segment": "Freelance designers",
         "pain_point": "Clients see design as decoration, not business value",
@@ -33,15 +33,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 6,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://medium.com/design-bootcamp/why-youre-losing-clients-as-a-freelance-designer-73122409bb56",
+             "note": "Freelance designers struggle to communicate value; undercharge when they can't articulate business impact."},
+            {"url": "https://alexberman.com/freelance-rate-graphic-designer",
+             "note": "Rate justification hinges on 'the problem, your process, and the business result' — not just finished work."},
+            {"url": "https://www.canva.com/pricing/",
+             "note": "Canva Pro $15/mo confirms Freemium tier; premium presentation templates gated to Pro."},
+        ],
     },
 
-    # Startup founders · Notion
-    # sources:
-    #   https://news.ycombinator.com/item?id=14311953  (HN: "endless MVP" 1.5 years past sprint)
-    #   https://www.f22labs.com/blogs/how-to-avoid-mistakes-founders-make-with-mvps/
-    #   https://www.notion.com/templates/idea-to-mvp
-    #   https://thoughtbot.com/blog/common-mistakes-founders-make-when-building-an-mvp-and-how-to-avoid-them
-    # notes: real complaint is feature creep, not "choosing scope"; WTP 4 — founders are cheap.
     {
         "segment": "Startup founders",
         "pain_point": "Feature creep makes MVP scope balloon before launch",
@@ -53,15 +54,18 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 4,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://news.ycombinator.com/item?id=14311953",
+             "note": "Commenters describe being stuck on 'endless MVP' 1.5 years past initial sprint due to constant feature additions."},
+            {"url": "https://www.f22labs.com/blogs/how-to-avoid-mistakes-founders-make-with-mvps/",
+             "note": "Cramming too much into MVP is the most common founder mistake."},
+            {"url": "https://www.notion.com/templates/idea-to-mvp",
+             "note": "Notion has MVP-specific templates as a real feature; Freemium tier confirmed."},
+            {"url": "https://thoughtbot.com/blog/common-mistakes-founders-make-when-building-an-mvp-and-how-to-avoid-them",
+             "note": "Thoughtbot confirms scope creep as core MVP failure mode."},
+        ],
     },
 
-    # Product managers · Aha (Roadmaps)
-    # sources:
-    #   https://news.ycombinator.com/item?id=25899773  (HN: "Escaping the Roadmap Trap")
-    #   https://news.ycombinator.com/item?id=22827275  (Ask HN on roadmap management)
-    #   https://www.lennysnewsletter.com/p/mission-vision-strategy-goals-roadmap
-    #   https://www.aha.io/roadmaps/pricing  (Premium starts at $59/user/mo)
-    # notes: pain refined to "items don't trace to strategy"; Aha actively markets the fix.
     {
         "segment": "Product managers",
         "pain_point": "Roadmap items don't trace back to strategic goals",
@@ -73,15 +77,18 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 8,
         "competition_intensity": 8,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://news.ycombinator.com/item?id=25899773",
+             "note": "'Escaping the Roadmap Trap' — roadmaps treated as delivery promises while strategy gets lost."},
+            {"url": "https://news.ycombinator.com/item?id=22827275",
+             "note": "Ask HN on roadmap management: priority churn and inability to tie work back to OKRs."},
+            {"url": "https://www.lennysnewsletter.com/p/mission-vision-strategy-goals-roadmap",
+             "note": "Lenny on the strategy-to-roadmap cascade as the explicit problem PMs are trying to solve."},
+            {"url": "https://www.aha.io/roadmaps/pricing",
+             "note": "Aha Roadmaps Premium starts at $59/user/mo annual; product explicitly markets 'Link strategy to all product work.'"},
+        ],
     },
 
-    # Product managers · Productboard
-    # sources:
-    #   https://news.ycombinator.com/item?id=22827275  (sales overrules roadmap; constant pushback)
-    #   https://news.ycombinator.com/item?id=25899773  (roadmap-as-promise used against PMs)
-    #   https://www.productplan.com/learn/roadmap-tips-align-stakeholders
-    #   https://www.productboard.com/pricing/  (Pro $59/maker/mo)
-    # notes: pain refined to "constant pushback" (not just "defending").
     {
         "segment": "Product managers",
         "pain_point": "Stakeholders keep pushing back on roadmap priorities",
@@ -93,14 +100,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 8,
         "competition_intensity": 8,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://news.ycombinator.com/item?id=22827275",
+             "note": "Business teams constantly shift priorities; sales overrules roadmap; 'if everything is top priority then nothing is.'"},
+            {"url": "https://news.ycombinator.com/item?id=25899773",
+             "note": "'The org takes a roadmap as a promise' and stakeholders use it against PMs when slips happen."},
+            {"url": "https://www.productboard.com/pricing/",
+             "note": "Productboard Pro $59/maker/mo; Spark $15–19; legacy Essentials $19. Confirms Paid tier."},
+        ],
     },
 
-    # UX researchers · Dovetail (repository)
-    # sources:
-    #   https://www.looppanel.com/blog/dovetail-alternatives  ("scattered Notion, Drive, Slack"; 80% of repositories fail)
-    #   https://www.koji.so/blog/best-ux-research-repository-tools-2026
-    #   https://dovetail.com/pricing/  (Free + Enterprise tiers; Pro ~$39/user/mo)
-    # notes: pain specifies where insights scatter, as named in source.
     {
         "segment": "UX researchers",
         "pain_point": "Research lives in scattered docs across Notion, Drive, and Slack",
@@ -112,15 +121,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 7,
         "competition_intensity": 8,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.looppanel.com/blog/dovetail-alternatives",
+             "note": "'Research still living in scattered Notion pages, Google Drives, and Slack threads'; 80% of repositories fail to meet team needs."},
+            {"url": "https://www.koji.so/blog/best-ux-research-repository-tools-2026",
+             "note": "Competitor landscape (Dovetail, Marvin, Condens, Notably, Reduct) confirms scattered-research as industry-wide pain."},
+            {"url": "https://dovetail.com/pricing/",
+             "note": "Dovetail has Free + Enterprise (custom) tiers; markets 'Research Repository' as a solution. Enterprise reportedly $21K+/yr."},
+        ],
     },
 
-    # UX researchers · Dovetail (sharing)
-    # sources:
-    #   https://medium.com/design-bootcamp/breaking-the-silo-why-ux-research-gets-ignored-and-what-can-we-do-about-it-ad4b6e55d90d
-    #   https://uxpsychology.substack.com/p/when-stakeholders-say-we-knew-that  (hindsight bias dismissing research)
-    #   https://www.looppanel.com/blog/dovetail-alternatives  ("abandoned dumping grounds")
-    #   https://dovetail.com/pricing/  (sharing features on Enterprise)
-    # notes: pain refined to "filed but never influence decisions" — closes-the-loop gap.
     {
         "segment": "UX researchers",
         "pain_point": "Research insights get filed but never influence product decisions",
@@ -132,14 +142,18 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 6,
         "competition_intensity": 6,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://medium.com/design-bootcamp/breaking-the-silo-why-ux-research-gets-ignored-and-what-can-we-do-about-it-ad4b6e55d90d",
+             "note": "Why research gets ignored: KPI/revenue priorities override; long reports get lost in inboxes."},
+            {"url": "https://uxpsychology.substack.com/p/when-stakeholders-say-we-knew-that",
+             "note": "Hindsight bias: stakeholders dismiss findings as 'knew it all along' — erodes respect for research."},
+            {"url": "https://www.looppanel.com/blog/dovetail-alternatives",
+             "note": "Repositories 'become abandoned dumping grounds where research goes unused.'"},
+            {"url": "https://dovetail.com/pricing/",
+             "note": "Sharing features (unlimited free viewers, comments, mentions, Slack/Teams integration) gated to Enterprise."},
+        ],
     },
 
-    # Indie hackers · Product Hunt
-    # sources:
-    #   https://www.indiehackers.com/post/finding-market-gaps-to-fill-with-ai-7807e78441
-    #   https://nicheshunter.app/blog/app-ideas-indie-hackers-solo-devs-studios
-    #   https://www.producthunt.com/about  (community-ranked discovery; free)
-    # notes: refined to "worth building for" — signal vs noise framing.
     {
         "segment": "Indie hackers",
         "pain_point": "Hard to find market gaps worth building for",
@@ -151,14 +165,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 6,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.indiehackers.com/post/finding-market-gaps-to-fill-with-ai-7807e78441",
+             "note": "Founder describes struggle distinguishing real pain from tech-driven ideas; comments confirm theme."},
+            {"url": "https://nicheshunter.app/blog/app-ideas-indie-hackers-solo-devs-studios",
+             "note": "Big companies ignore $500K niches; solo devs should 'look for people asking for app recommendations.'"},
+            {"url": "https://www.producthunt.com/about",
+             "note": "Product Hunt is community-ranked discovery; free to browse/submit."},
+        ],
     },
 
-    # Indie hackers · Reddit
-    # sources:
-    #   https://www.indiehackers.com/post/a-few-thoughts-on-validating-startup-ideas-before-building-anything-d9e472ed0e
-    #   https://www.indiehackers.com/post/how-to-validate-a-startup-idea-34f9df9d6b
-    #   https://nomadvisamalta.com/discover-the-top-product-hunt-alternatives-for-indie-makers-in-2025/  (Reddit as validation channel)
-    # notes: #1 reason indie projects fail — building unwanted things.
     {
         "segment": "Indie hackers",
         "pain_point": "Hard to validate an idea before building it",
@@ -170,16 +186,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.indiehackers.com/post/a-few-thoughts-on-validating-startup-ideas-before-building-anything-d9e472ed0e",
+             "note": "Author warns about months of work building 'something people do not want to use'; recommends user conversations and pre-sells."},
+            {"url": "https://www.indiehackers.com/post/how-to-validate-a-startup-idea-34f9df9d6b",
+             "note": "Framework covers market scan, business viability, unfair advantage — validation as recurring community pain."},
+            {"url": "https://nomadvisamalta.com/discover-the-top-product-hunt-alternatives-for-indie-makers-in-2025/",
+             "note": "Reddit's role as de facto validation channel: r/SideProject, r/Entrepreneur for honest feedback."},
+        ],
     },
 
-    # Design leads · Figma (design system)
-    # sources:
-    #   https://www.nngroup.com/articles/ux-debt/  (NN/g: need visualizations to get leadership buy-in)
-    #   https://blog.logrocket.com/ux-design/design-debt-is-slowing-you-down  ("strains internal relationships")
-    #   https://dev.to/tlorent/technical-debt-will-bite-us-in-the-ass-how-to-make-non-technical-stakeholders-actually-care-2oef
-    #   https://www.figma.com/pricing/  (design system on Professional+)
-    # notes: pain refined to "make stakeholders care" — translation problem.
-    #        Competition 4 — zeroheight does docs, not debt impact; mostly DIY decks today.
     {
         "segment": "Design leads",
         "pain_point": "Hard to make stakeholders care about design debt",
@@ -191,14 +207,18 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 6,
         "competition_intensity": 4,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.nngroup.com/articles/ux-debt/",
+             "note": "NN/g: need visualizations and user-testing evidence to 'help leadership understand why it's important.'"},
+            {"url": "https://blog.logrocket.com/ux-design/design-debt-is-slowing-you-down",
+             "note": "'Design debt strains internal relationships, with stakeholders arguing about priorities.'"},
+            {"url": "https://dev.to/tlorent/technical-debt-will-bite-us-in-the-ass-how-to-make-non-technical-stakeholders-actually-care-2oef",
+             "note": "Translation problem: 'When you say refactoring, non-technical stakeholders hear optional polish.'"},
+            {"url": "https://www.figma.com/pricing/",
+             "note": "Figma design system / shared libraries on Professional ($16/seat) — confirms Paid tier."},
+        ],
     },
 
-    # Design leads · Figma (analytics)
-    # sources:
-    #   https://didoo.medium.com/measuring-the-impact-of-a-design-system-7f925af090f7  (Rastelli: invented custom metrics)
-    #   https://medium.com/@theuxarchitect/measuring-design-roi-quantifying-the-impact-of-ux-in-large-organizations-9ce1af0e3336
-    #   https://www.figma.com/pricing/  (org-wide analytics gated to Organization/Enterprise)
-    # notes: pain refined to "quantify impact" — career-impacting for design leads.
     {
         "segment": "Design leads",
         "pain_point": "Hard to quantify design team impact",
@@ -210,14 +230,16 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 7,
         "competition_intensity": 5,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://didoo.medium.com/measuring-the-impact-of-a-design-system-7f925af090f7",
+             "note": "Rastelli: 'really hard to measure people's happiness or impact on velocity'; had to invent custom git-log visualization."},
+            {"url": "https://medium.com/@theuxarchitect/measuring-design-roi-quantifying-the-impact-of-ux-in-large-organizations-9ce1af0e3336",
+             "note": "Whole post about quantifying UX ROI for large orgs."},
+            {"url": "https://www.figma.com/pricing/",
+             "note": "Org-wide design system analytics on Organization ($55) and Enterprise ($90) — Enterprise tier is the accurate label."},
+        ],
     },
 
-    # Heads of Product · Aha (portfolio)
-    # sources:
-    #   https://craft.io/guide/product-management-vs-portfolio-management/  ("no reliable way to see across portfolio")
-    #   https://www.aha.io/roadmaps/pricing  (Enterprise+ tier gates OKRs, capacity, advanced analytics)
-    # notes: evidence_count 2 — directional. Most Heads-of-Product discussion lives
-    #        in gated communities (Lenny's Slack, Reforge), not public forums.
     {
         "segment": "Heads of Product",
         "pain_point": "No visibility into bets across squads",
@@ -229,14 +251,14 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 9,
         "competition_intensity": 7,
         "evidence_count": 2,
+        "sources": [
+            {"url": "https://craft.io/guide/product-management-vs-portfolio-management/",
+             "note": "'Leaders need a reliable way to see how work is progressing across the whole portfolio… Without that visibility, portfolio management becomes a manual reporting exercise.'"},
+            {"url": "https://www.aha.io/roadmaps/pricing",
+             "note": "Premium ~$74.59/user/mo, Enterprise ~$124.99, Enterprise+ $149. Portfolio-level capabilities (OKRs, capacity, advanced analytics) gated to Enterprise+."},
+        ],
     },
 
-    # Heads of Product · Productboard (strategy)
-    # sources:
-    #   https://www.lennysnewsletter.com/p/strategy-blocks-an-operators-guide  (Headspace: "teams confused about *why*")
-    #   https://www.departmentofproduct.com/blog/5-ways-to-keep-teams-aligned-as-a-product-manager/  ("Google Drive until next quarter")
-    #   https://www.productboard.com/pricing/productboard/  (Strategic planning Enterprise-only)
-    # notes: WTP 9 — Productboard Enterprise deals run $70–100k/yr per Vendr data.
     {
         "segment": "Heads of Product",
         "pain_point": "Strategy doesn't make it down to squads",
@@ -248,17 +270,19 @@ PRODUCT_ROWS = [
         "willingness_to_pay": 9,
         "competition_intensity": 6,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.lennysnewsletter.com/p/strategy-blocks-an-operators-guide",
+             "note": "Headspace: 'despite having established our product roadmap and success metrics and our mission and vision, teams were still confused about why we were working on the projects we chose.'"},
+            {"url": "https://www.departmentofproduct.com/blog/5-ways-to-keep-teams-aligned-as-a-product-manager/",
+             "note": "Failure mode: teams 'put it into a Google Drive until the next quarter' — strategy doesn't reach execution."},
+            {"url": "https://www.productboard.com/pricing/productboard/",
+             "note": "Starter Free / Essentials $19 / Pro $59 / Enterprise custom. Strategic planning + unlimited OKRs gated to Enterprise."},
+        ],
     },
 ]
 
 
 EDTECH_ROWS = [
-    # Career switchers · Coursera (certificates)
-    # sources:
-    #   https://www.coursera.org/professional-certificates  ($49/mo, 7-day trial)
-    #   https://www.coursera.org/google-career-certificates  ("75% positive career outcome in 6 months")
-    #   https://resumeworded.com/coursera-certificates-resume-key-advice  (cert alone often insufficient)
-    # notes: WTP 5 — matches Coursera's $49/mo; budget-constrained segment.
     {
         "segment": "Career switchers",
         "pain_point": "Hard to know which skills actually lead to a real job",
@@ -270,14 +294,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 8,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.coursera.org/professional-certificates",
+             "note": "Coursera Career/Professional Certificates: $49/mo subscription with 7-day free trial."},
+            {"url": "https://www.coursera.org/google-career-certificates",
+             "note": "'75% of certificate graduates report a positive career outcome within six months' — vendor framing."},
+            {"url": "https://resumeworded.com/coursera-certificates-resume-key-advice",
+             "note": "Cert alone often insufficient; career switchers need paired demonstrated skills — confirms 'which skills lead to a job' problem."},
+        ],
     },
 
-    # Career switchers · Codecademy (capstone)
-    # sources:
-    #   https://www.codecademy.com/pricing  (Basic free / Plus / Pro)
-    #   https://www.codecademy.com/learn/paths/front-end-engineer-career-path  (3 capstone projects)
-    #   https://discuss.codecademy.com/c/project/portfolio-project-reddit-project/1904  (everyone shipping same Reddit clone)
-    # notes: "generic projects" framing matches the actual interview-funnel complaint.
     {
         "segment": "Career switchers",
         "pain_point": "Generic tutorial projects don't impress hiring managers",
@@ -289,16 +315,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.codecademy.com/pricing",
+             "note": "Three-tier freemium model: Basic free / Plus / Pro. Portfolio projects gated to paid tiers."},
+            {"url": "https://www.codecademy.com/learn/paths/front-end-engineer-career-path",
+             "note": "3 capstone/portfolio projects (Personal Portfolio, Reddit Project, Final Front-End Project) — official career-path feature."},
+            {"url": "https://discuss.codecademy.com/c/project/portfolio-project-reddit-project/1904",
+             "note": "Forum thread: many learners share the same Reddit-clone capstone — 'everyone has the same project' pain."},
+        ],
     },
 
-    # Bootcamp graduates · LinkedIn
-    # sources:
-    #   https://careerkarma.com/blog/state-of-the-bootcamp-market-report-2024-statistics-and-share-analysis/  (2023 layoffs 264k+; months in hiring)
-    #   https://news.ycombinator.com/item?id=45235243  (HN: "graduated but no jobs")
-    #   https://news.ycombinator.com/item?id=33825785  (hiring manager: "none passed initial screening")
-    #   https://premium.linkedin.com/careers/compare-plans  (job search Free; Premium Career $39.99/mo)
-    # notes: severity 9 — paid $10–20k, 4–6 months in, can't land a job.
-    #        WTP 4 — cash-strapped post-bootcamp; only ISA-style outcome-tied pricing realistic.
     {
         "segment": "Bootcamp graduates",
         "pain_point": "Can't land first job after bootcamp",
@@ -310,14 +336,18 @@ EDTECH_ROWS = [
         "willingness_to_pay": 4,
         "competition_intensity": 8,
         "evidence_count": 4,
+        "sources": [
+            {"url": "https://careerkarma.com/blog/state-of-the-bootcamp-market-report-2024-statistics-and-share-analysis/",
+             "note": "2023 tech layoffs (264k+); grads spend 'months in the hiring process'; placement uncertainty hurting bootcamp signups."},
+            {"url": "https://news.ycombinator.com/item?id=45235243",
+             "note": "Front-page HN: 'graduated but no jobs' — CS/bootcamp grads unable to find work."},
+            {"url": "https://news.ycombinator.com/item?id=33825785",
+             "note": "Hiring manager: 'I've interviewed dozens of bootcamp graduates and none have passed initial screening for mid-level developer jobs.'"},
+            {"url": "https://premium.linkedin.com/careers/compare-plans",
+             "note": "LinkedIn job search is free; Premium Career $39.99/mo is the upgrade — free tier is the relevant comparator."},
+        ],
     },
 
-    # Bootcamp graduates · Reddit
-    # sources:
-    #   https://news.ycombinator.com/item?id=33825785  (real-experience gap)
-    #   https://www.bestcolleges.com/bootcamps/guides/jobs-after-bootcamps/  (imposter syndrome as bigger risk than knowledge gap)
-    # notes: evidence_count 2 — directional. Reddit-specific URLs not directly fetchable;
-    #        leaning on HN + industry summaries that triangulate the same pain.
     {
         "segment": "Bootcamp graduates",
         "pain_point": "Imposter syndrome — no real-world experience to back up the resume",
@@ -329,14 +359,14 @@ EDTECH_ROWS = [
         "willingness_to_pay": 5,
         "competition_intensity": 6,
         "evidence_count": 2,
+        "sources": [
+            {"url": "https://news.ycombinator.com/item?id=33825785",
+             "note": "Hiring-manager-led thread on bootcamp grads lacking real experience and failing screens — backdrop for imposter syndrome."},
+            {"url": "https://www.bestcolleges.com/bootcamps/guides/jobs-after-bootcamps/",
+             "note": "Imposter syndrome and low confidence are bigger risks than knowledge gaps for bootcamp grads."},
+        ],
     },
 
-    # Working professionals · Maven (cohorts)
-    # sources:
-    #   https://help.maven.com/en/articles/6732396-pricing-your-course  ($800–$2,500 typical, ~$500 avg)
-    #   https://maven.com/courses  (cohort courses with set start dates)
-    #   https://mavenanalytics.io/blog/cohort-learning-faq  (cohort 85–95% completion vs 5–15% self-paced)
-    # notes: cohort completion data directly validates "no time / don't finish" pain.
     {
         "segment": "Working professionals",
         "pain_point": "No time for full-length courses while working full-time",
@@ -348,14 +378,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 6,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://help.maven.com/en/articles/6732396-pricing-your-course",
+             "note": "Per-course pricing: $800–$2,500 typical, ~$500 average. Paid-per-course, not subscription."},
+            {"url": "https://maven.com/courses",
+             "note": "Cohort-based courses with set start dates ('6 weeks · Starts Jun 19'), live + instructor-led."},
+            {"url": "https://mavenanalytics.io/blog/cohort-learning-faq",
+             "note": "Cohort courses 85–95% completion vs 5–15% self-paced — validates 'no time / don't finish' pain."},
+        ],
     },
 
-    # Working professionals · DeepLearning.AI
-    # sources:
-    #   https://learn.deeplearning.ai/membership  (Pro $25–30/mo; Free tier)
-    #   https://www.deeplearning.ai/courses/  ("AI for Everyone" / "Generative AI for Everyone")
-    #   https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/the-organization-blog/redefine-ai-upskilling-as-a-change-imperative  (77% of companies launching upskilling; >20% workforce reskilled in 3 years)
-    # notes: pain sharpened to "fast without becoming an engineer" — actual non-technical framing.
     {
         "segment": "Working professionals",
         "pain_point": "Need to upskill in AI fast without becoming an engineer",
@@ -367,14 +399,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 6,
         "competition_intensity": 8,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://learn.deeplearning.ai/membership",
+             "note": "DeepLearning.AI Pro subscription: $30/mo monthly or $25/mo annual ($300/yr). Free tier also exists."},
+            {"url": "https://www.deeplearning.ai/courses/",
+             "note": "Specializations exist (Deep Learning, ML, NLP, TensorFlow, Generative AI) plus non-technical 'AI for Everyone' / 'Generative AI for Everyone'."},
+            {"url": "https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/the-organization-blog/redefine-ai-upskilling-as-a-change-imperative",
+             "note": "Enterprise AI upskilling demand: 40% of AI-adopting respondents expect >20% workforce reskilled in 3 years; 77% of companies intend to launch upskilling."},
+        ],
     },
 
-    # Self-taught learners · YouTube
-    # sources:
-    #   https://www.danielkliewer.com/blog/2025-10-21-learn-programming-computer-science-youtube-roadmap  ("tutorial hell" framing)
-    #   r/learnprogramming community discussions (search-summary; "tutorial hell" is dominant idiom)
-    #   https://www.youtube.com/howyoutubeworks/  (free; no curated roadmap)
-    # notes: "tutorial hell" is the actual self-taught idiom. WTP 3 — free YouTube is the baseline.
     {
         "segment": "Self-taught learners",
         "pain_point": "Stuck in tutorial hell with no clear roadmap of what to learn next",
@@ -385,15 +419,15 @@ EDTECH_ROWS = [
         "severity": 7,
         "willingness_to_pay": 3,
         "competition_intensity": 8,
-        "evidence_count": 3,
+        "evidence_count": 2,
+        "sources": [
+            {"url": "https://www.danielkliewer.com/blog/2025-10-21-learn-programming-computer-science-youtube-roadmap",
+             "note": "'Jumping randomly between topics, getting stuck in tutorial hell, or giving up because you don't know what to learn next' — central pain of YouTube-based learning."},
+            {"url": "https://www.youtube.com/howyoutubeworks/",
+             "note": "YouTube is free; user-generated tutorials with no native curated roadmap."},
+        ],
     },
 
-    # Self-taught learners · ChatGPT (tutoring)
-    # sources:
-    #   https://chatgpt.com/pricing/  (Free / Plus $20/mo / Pro)
-    #   https://www.sciencedirect.com/science/article/pii/S2666920X24001127  (PyTutor: chat-based feedback less effective than IDE)
-    #   https://www.mdpi.com/2227-7102/14/2/120  (ChatGPT for independent learners; documents value and limits)
-    # notes: feedback gap partially mitigated by ChatGPT, hence severity 6 not 8.
     {
         "segment": "Self-taught learners",
         "pain_point": "No expert to review my projects or tell me where I'm going wrong",
@@ -405,15 +439,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 3,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://chatgpt.com/pricing/",
+             "note": "Free / Plus $20/mo / Pro — freemium model. Free tier includes basic chat-based help; Study Mode is part of the product."},
+            {"url": "https://www.sciencedirect.com/science/article/pii/S2666920X24001127",
+             "note": "PyTutor peer-reviewed study: ChatGPT-based tutoring helps engagement but 'immediate and precise feedback is invaluable... real-time formative feedback from IDEs is more efficient than a chat-based tool.'"},
+            {"url": "https://www.mdpi.com/2227-7102/14/2/120",
+             "note": "MDPI case study on ChatGPT supporting independent learners; documents both value and limits of code feedback from a generalist LLM."},
+        ],
     },
 
-    # Aspiring PMs · Reforge
-    # sources:
-    #   https://reforge.helpscoutdocs.com/article/38-how-much-does-reforge-cost  (Individual $1,995/yr)
-    #   https://www.landpmjob.com/reforge-review  ("zero job support, coaching, or placement")
-    #   https://www.teamblind.com/post/Reforge-Course-for-PM-interview-prep-o4GHsXLY  (Blind: community questioning interview transfer)
-    #   https://sirjohnnymai.com/blog/reforge-best-pm-courses-2026  ("doesn't have an interview prep course")
-    # notes: WTP 7 — aspiring PMs spend $50–150/mo on Exponent/IGotAnOffer/Leland; Reforge itself $2k/yr.
     {
         "segment": "Aspiring PMs",
         "pain_point": "I know the frameworks but freeze on real PM interview questions",
@@ -425,14 +460,18 @@ EDTECH_ROWS = [
         "willingness_to_pay": 7,
         "competition_intensity": 8,
         "evidence_count": 4,
+        "sources": [
+            {"url": "https://reforge.helpscoutdocs.com/article/38-how-much-does-reforge-cost",
+             "note": "Reforge Individual $1,995/yr (paid membership, not enterprise-only); on-demand PM course library exists."},
+            {"url": "https://www.landpmjob.com/reforge-review",
+             "note": "'It's NOT for job seekers — offers zero job support, coaching, or placement.' Directly confirms theory-to-interview gap."},
+            {"url": "https://www.teamblind.com/post/Reforge-Course-for-PM-interview-prep-o4GHsXLY",
+             "note": "Blind thread: community questioning whether Reforge translates to interviews."},
+            {"url": "https://sirjohnnymai.com/blog/reforge-best-pm-courses-2026",
+             "note": "Review: 'Reforge doesn't have an interview prep course' and 'some of their mocks aren't even that good.'"},
+        ],
     },
 
-    # Aspiring PMs · Lenny's newsletter
-    # sources:
-    #   https://www.lennysnewsletter.com/about  (Substack subscription, $150/yr)
-    #   https://aatir.substack.com/p/how-to-create-a-product-manager-portfolio
-    #   https://medium.com/@akkineni.saibhavana/product-notes-by-sai-how-to-build-a-pm-portfolio-from-scratch-even-with-zero-pm-experience-e2108591bcac
-    # notes: pain about job title proof. No one offers structured build-in-public PM portfolio product.
     {
         "segment": "Aspiring PMs",
         "pain_point": "Hard to demonstrate PM craft without a job title to point to",
@@ -444,16 +483,16 @@ EDTECH_ROWS = [
         "willingness_to_pay": 6,
         "competition_intensity": 7,
         "evidence_count": 3,
+        "sources": [
+            {"url": "https://www.lennysnewsletter.com/about",
+             "note": "Substack with paid subscription ($150/yr); articles + podcast + Slack."},
+            {"url": "https://aatir.substack.com/p/how-to-create-a-product-manager-portfolio",
+             "note": "Aspiring PMs need to 'show how you think' via portfolio when they lack the PM title."},
+            {"url": "https://medium.com/@akkineni.saibhavana/product-notes-by-sai-how-to-build-a-pm-portfolio-from-scratch-even-with-zero-pm-experience-e2108591bcac",
+             "note": "Recurring 'no PM experience, how do I prove craft' pain in PM community."},
+        ],
     },
 
-    # L&D managers · LinkedIn Learning
-    # sources:
-    #   https://business.linkedin.com/learn/compare-plans  (AI learning plans + LMS/LXP on Enterprise)
-    #   https://learning.linkedin.com/resources/learning-insights/business-value-linkedin-learning  (vendor's own ROI page)
-    #   https://www.gpstrategies.com/wp-content/uploads/2025/09/GPStrategies_Measuring_the_Business_Impact_of_Learning_2025_Ebook_01_FULL.pdf  (90% of L&D struggle to prove business value)
-    #   https://clo100.com/2025/12/16/kirkpatrick-level-4-ld-align-learning-with-business-kpis-for-measurable-roi/  (only ~24% reach Kirkpatrick Level 4)
-    # notes: WTP 9 — enterprise L&D budgets six-figure ($380/seat × thousands).
-    #        Severity 8 — #1 reason L&D budgets get cut.
     {
         "segment": "L&D managers",
         "pain_point": "Can't show leadership how training translates to business outcomes",
@@ -465,14 +504,18 @@ EDTECH_ROWS = [
         "willingness_to_pay": 9,
         "competition_intensity": 7,
         "evidence_count": 4,
+        "sources": [
+            {"url": "https://business.linkedin.com/learn/compare-plans",
+             "note": "Enterprise tier: AI-powered Learning Plans, Custom content upload, learning paths + LMS/LXP integrations."},
+            {"url": "https://learning.linkedin.com/resources/learning-insights/business-value-linkedin-learning",
+             "note": "Vendor's own ROI page — exists precisely because customers ask this question."},
+            {"url": "https://www.gpstrategies.com/wp-content/uploads/2025/09/GPStrategies_Measuring_the_Business_Impact_of_Learning_2025_Ebook_01_FULL.pdf",
+             "note": "'Measuring the Business Impact of Learning 2025: L&D at a Crossroads' — 90% of L&D orgs struggle to prove business value."},
+            {"url": "https://clo100.com/2025/12/16/kirkpatrick-level-4-ld-align-learning-with-business-kpis-for-measurable-roi/",
+             "note": "Only ~24% of orgs fully implement Kirkpatrick to Level 4 (business outcomes); most stop at completion rates."},
+        ],
     },
 
-    # L&D managers · Pluralsight
-    # sources:
-    #   https://www.pluralsight.com/businesses/pricing  (6,500+ courses, 900+ paths, Skill IQ / Role IQ)
-    #   G2/Capterra aggregated reviews ("non-tech content thin", "catalog goes stale")
-    #   https://www.pluralsight.com/product/role-iq  (vendor's own attempt at role-mapping gap)
-    # notes: pain refined to "doesn't map to our roles" — actual L&D language vs consumer "stale".
     {
         "segment": "L&D managers",
         "pain_point": "Generic course catalogs don't map to the roles and skills my org actually needs",
@@ -483,7 +526,13 @@ EDTECH_ROWS = [
         "severity": 7,
         "willingness_to_pay": 9,
         "competition_intensity": 7,
-        "evidence_count": 3,
+        "evidence_count": 2,
+        "sources": [
+            {"url": "https://www.pluralsight.com/businesses/pricing",
+             "note": "Enterprise tier: 6,500+ courses, 900+ learning paths, Skill IQ / Role IQ."},
+            {"url": "https://www.pluralsight.com/product/role-iq",
+             "note": "Vendor's own Role IQ page exists because role-mapping gap is a known customer pain."},
+        ],
     },
 ]
 
