@@ -29,13 +29,13 @@ function ScoreBar({ score }) {
   );
 }
 
-export default function OpportunitiesTable({ opportunities }) {
+export default function OpportunitiesTable({ opportunities, onSelectOpportunity }) {
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-3 border-b border-slate-200/70">
         <h3 className="text-sm font-semibold text-ink">Ranked opportunities</h3>
         <p className="text-xs text-ink-muted">
-          Scored on severity, willingness to pay, low competition, and evidence.
+          Click any row to see the score breakdown and supporting signals.
         </p>
       </div>
       <div className="overflow-auto">
@@ -60,7 +60,8 @@ export default function OpportunitiesTable({ opportunities }) {
               return (
                 <tr
                   key={i}
-                  className="border-t border-slate-100 hover:bg-slate-50/60"
+                  onClick={() => onSelectOpportunity?.(o)}
+                  className="border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer"
                 >
                   <td className="px-4 py-2.5 text-ink-muted tabular-nums">{i + 1}</td>
                   <td className="px-4 py-2.5 font-medium text-ink">{o.opportunity}</td>

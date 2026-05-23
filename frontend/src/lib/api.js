@@ -46,6 +46,11 @@ export function analyzeCsv(file) {
   return request("/analyze", { method: "POST", body: form });
 }
 
+export function getOpportunityBreakdown(opportunityId, dataset) {
+  const qs = dataset ? `?dataset=${encodeURIComponent(dataset)}` : "";
+  return request(`/opportunities/${encodeURIComponent(opportunityId)}/breakdown${qs}`);
+}
+
 export const DEMO_DATASETS = [
   {
     key: "product",

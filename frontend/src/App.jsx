@@ -10,6 +10,7 @@ import OpportunityMatrix from "./components/OpportunityMatrix";
 import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
+import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -18,6 +19,7 @@ export default function App() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [sourceLabel, setSourceLabel] = useState(null);
   const [activeDemoKey, setActiveDemoKey] = useState(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const fileInput = useRef(null);
 
   const runDemo = async (key) => {
@@ -58,6 +60,7 @@ export default function App() {
     setSourceLabel(null);
     setActiveDemoKey(null);
     setSelectedNode(null);
+    setSelectedOpportunity(null);
     setError(null);
   };
 
@@ -191,10 +194,19 @@ export default function App() {
               <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
             </div>
 
-            <OpportunitiesTable opportunities={data.opportunities} />
+            <OpportunitiesTable
+              opportunities={data.opportunities}
+              onSelectOpportunity={setSelectedOpportunity}
+            />
           </>
         )}
       </main>
+
+      <ScoreBreakdownDrawer
+        opportunity={selectedOpportunity}
+        datasetKey={activeDemoKey}
+        onClose={() => setSelectedOpportunity(null)}
+      />
 
       <footer className="mx-auto max-w-7xl px-6 pb-10 pt-2 text-xs text-ink-muted">
         Market Opportunity Map · MVP build
