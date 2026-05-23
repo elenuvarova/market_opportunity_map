@@ -42,24 +42,24 @@ function CustomTooltip({ active, payload }) {
 export default function OpportunityMatrix({ matrix }) {
   return (
     <div className="card p-5">
-      <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3 mb-3">
         <div>
           <h3 className="text-sm font-semibold text-ink">Opportunity matrix</h3>
           <p className="text-xs text-ink-muted">
             Severity × competition. Top-left is the strongest play.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-ink-muted">
-          <span className="inline-flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-emerald-600" /> ≥75
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-yellow-500" /> 60–74
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-orange-500" /> 40–59
           </span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-slate-400" /> &lt;40
           </span>
         </div>

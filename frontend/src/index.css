@@ -42,7 +42,7 @@
     @apply bg-white rounded-2xl border border-slate-200/70 shadow-card;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 whitespace-nowrap;
   }
   .btn-primary {
     @apply btn bg-ink text-white hover:bg-slate-800 focus-visible:ring-ink;

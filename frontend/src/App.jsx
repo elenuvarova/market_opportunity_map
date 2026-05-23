@@ -113,24 +113,24 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur sticky top-0 z-20">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 grid place-items-center text-white font-semibold">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 grid place-items-center text-white font-semibold flex-shrink-0">
               M
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-ink leading-tight">
                 Market Opportunity Map
               </h1>
-              <p className="text-xs text-ink-muted leading-tight">
+              <p className="text-xs text-ink-muted leading-tight hidden sm:block">
                 Visualize market gaps, competitor clusters, and strategic opportunities.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
             {data && (
               <span className="text-xs text-ink-muted hidden sm:inline">
                 Source: <span className="font-medium text-ink">{sourceLabel}</span>
@@ -183,7 +183,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
         <div className="md:hidden rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-ink-soft">
           Best viewed on desktop — the force graph and the score-breakdown
           drawer assume a wider screen.
