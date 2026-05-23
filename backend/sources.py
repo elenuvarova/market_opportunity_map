@@ -79,7 +79,10 @@ SOURCE_TYPE_RULES: list[tuple[str, str]] = [
 
 
 def source_type_from_url(url: str) -> str:
-    host = (urlparse(url).hostname or "").lower()
+    parsed = urlparse(url)
+    if parsed.scheme == "pasted":
+        return "Pasted insight"
+    host = (parsed.hostname or "").lower()
     for pattern, label in SOURCE_TYPE_RULES:
         if pattern in host:
             return label

@@ -7,6 +7,7 @@ from typing import Iterable
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from analysis import (
     ValidationError,
@@ -19,6 +20,13 @@ from analysis import (
     validate_dataframe,
 )
 from demo_data import DEMO_DATASETS, get_dataset
+from parse import assemble
+
+
+class AssembleRequest(BaseModel):
+    competitors_text: str = ""
+    pains_text: str = ""
+    quotes_text: str = ""
 
 app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
 
@@ -118,6 +126,25 @@ def opportunity_brief(
             detail=f"Opportunity '{opportunity_id}' not found in dataset '{ds['label']}'",
         )
     return build_brief(row, df)
+
+
+@app.post("/assemble")
+def assemble_from_paste(payload: AssembleRequest) -> dict:
+    rows = assemble(
+        payload.competitors_text,
+        payload.pains_text,
+        payload.quotes_text,
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=422,
+            detail="Couldn't extract any usable signals — paste at least one pain or one quote.",
+        )
+    df = pd.DataFrame(rows)
+    try:
+        return analyze_market_data(df)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.post("/analyze")

@@ -430,31 +430,49 @@ def _enrich_sources(raw_sources: list) -> list[dict]:
 
 
 def build_opportunities(df: pd.DataFrame) -> list[dict]:
+    """One row per opportunity id (slug of name). When the dataset
+    cross-joins a pain across multiple competitors (common in pasted
+    input), we keep the row with the highest score and merge sources."""
     ranked = df.sort_values("opportunity_score", ascending=False)
-    out = []
+    seen: dict[str, dict] = {}
     for _, row in ranked.iterrows():
-        out.append(
-            {
-                "id": slugify(row["opportunity"]),
-                "opportunity": row["opportunity"],
-                "segment": row["segment"],
-                "pain_point": row["pain_point"],
-                "competitor": row["competitor"],
-                "severity": int(row["severity"]),
-                "willingness_to_pay": int(row["willingness_to_pay"]),
-                "competition_intensity": int(row["competition_intensity"]),
-                "evidence_count": int(row["evidence_count"]),
-                "opportunity_score": int(row["opportunity_score"]),
-                "sources": _enrich_sources(row.get("sources", [])),
-            }
-        )
-    return out
+        oid = slugify(row["opportunity"])
+        if oid in seen:
+            seen[oid]["sources"].extend(_enrich_sources(row.get("sources", [])))
+            continue
+        seen[oid] = {
+            "id": oid,
+            "opportunity": row["opportunity"],
+            "segment": row["segment"],
+            "pain_point": row["pain_point"],
+            "competitor": row["competitor"],
+            "severity": int(row["severity"]),
+            "willingness_to_pay": int(row["willingness_to_pay"]),
+            "competition_intensity": int(row["competition_intensity"]),
+            "evidence_count": int(row["evidence_count"]),
+            "opportunity_score": int(row["opportunity_score"]),
+            "sources": _enrich_sources(row.get("sources", [])),
+        }
+    # Dedupe merged sources by URL
+    for o in seen.values():
+        seen_urls = set()
+        unique = []
+        for s in o["sources"]:
+            if s["url"] in seen_urls:
+                continue
+            seen_urls.add(s["url"])
+            unique.append(s)
+        o["sources"] = unique
+    return list(seen.values())
 
 
 def build_matrix(df: pd.DataFrame) -> list[dict]:
-    return [
-        {
-            "id": slugify(row["opportunity"]),
+    """One scatter point per opportunity id; collapses duplicate rows."""
+    seen: dict[str, dict] = {}
+    for _, row in df.iterrows():
+        oid = slugify(row["opportunity"])
+        entry = {
+            "id": oid,
             "opportunity": row["opportunity"],
             "segment": row["segment"],
             "x_competition": int(row["competition_intensity"]),
@@ -462,8 +480,9 @@ def build_matrix(df: pd.DataFrame) -> list[dict]:
             "bubble_size": int(row["evidence_count"]),
             "score": int(row["opportunity_score"]),
         }
-        for _, row in df.iterrows()
-    ]
+        if oid not in seen or entry["score"] > seen[oid]["score"]:
+            seen[oid] = entry
+    return list(seen.values())
 
 
 def analyze_market_data(df: pd.DataFrame) -> dict:
