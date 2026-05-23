@@ -43,19 +43,24 @@ function ComponentBar({ component, totalScore }) {
 }
 
 function Signal({ signal }) {
+  const isExternal = /^https?:\/\//i.test(signal.url || "");
   return (
     <li className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3 mb-2">
         <span className="chip bg-slate-100 text-slate-700">{signal.source_type}</span>
-        <a
-          href={signal.url}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="text-xs text-ink-soft hover:text-ink underline-offset-2 hover:underline truncate max-w-[60%]"
-          title={signal.url}
-        >
-          {signal.url}
-        </a>
+        {isExternal ? (
+          <a
+            href={signal.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-xs text-ink-soft hover:text-ink underline-offset-2 hover:underline truncate max-w-[60%]"
+            title={signal.url}
+          >
+            {signal.url}
+          </a>
+        ) : (
+          <span className="text-[10px] text-ink-muted">local · not linkable</span>
+        )}
       </div>
       {signal.note && (
         <p className="text-sm text-ink-soft leading-snug">

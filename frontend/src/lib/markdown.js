@@ -41,7 +41,11 @@ export function briefToMarkdown(brief) {
     lines.push("");
     for (const s of brief.top_signals) {
       lines.push(`- **${s.source_type}** — ${s.note || "(no note)"}`);
-      lines.push(`  ${s.url}`);
+      if (/^https?:\/\//i.test(s.url || "")) {
+        lines.push(`  ${s.url}`);
+      } else {
+        lines.push(`  _(local, not linkable)_`);
+      }
     }
     lines.push("");
   }

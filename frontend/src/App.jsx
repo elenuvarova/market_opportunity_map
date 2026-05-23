@@ -181,6 +181,11 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-6">
+        <div className="md:hidden rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-ink-soft">
+          Best viewed on desktop — the force graph and the score-breakdown
+          drawer assume a wider screen.
+        </div>
+
         {error && (
           <ErrorMessage message={error} onDismiss={() => setError(null)} />
         )}

@@ -78,9 +78,21 @@ export default function OpportunitiesTable({
                   className="border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer"
                 >
                   <td className="px-4 py-2.5 text-ink-muted tabular-nums">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-ink">{o.opportunity}</td>
-                  <td className="px-4 py-2.5 text-ink-soft">{o.segment}</td>
-                  <td className="px-4 py-2.5 text-ink-soft">{o.pain_point}</td>
+                  <td className="px-4 py-2.5 font-medium text-ink max-w-[280px]">
+                    <span className="block truncate" title={o.opportunity}>
+                      {o.opportunity}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-ink-soft max-w-[160px]">
+                    <span className="block truncate" title={o.segment}>
+                      {o.segment}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-ink-soft max-w-[280px]">
+                    <span className="block truncate" title={o.pain_point}>
+                      {o.pain_point}
+                    </span>
+                  </td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{o.severity}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{o.willingness_to_pay}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums">{o.competition_intensity}</td>

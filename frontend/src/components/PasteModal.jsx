@@ -140,9 +140,13 @@ export default function PasteModal({ open, onClose, onSubmit }) {
             }
             placeholder={current.placeholder}
             rows={12}
+            maxLength={100_000}
             className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm font-mono leading-snug focus:border-slate-400 focus:outline-none resize-none"
             spellCheck={false}
           />
+          <div className="mt-1 text-[10px] text-ink-muted text-right tabular-nums">
+            {values[current.field].length.toLocaleString()} / 100,000 chars
+          </div>
           {error && (
             <p className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
               {error}
