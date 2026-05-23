@@ -1,4 +1,4 @@
-DEMO_ROWS = [
+PRODUCT_ROWS = [
     {
         "segment": "Freelance designers",
         "pain_point": "Hard to present design value to clients",
@@ -144,3 +144,175 @@ DEMO_ROWS = [
         "evidence_count": 10,
     },
 ]
+
+
+EDTECH_ROWS = [
+    {
+        "segment": "Career switchers",
+        "pain_point": "Hard to know which skills lead to a real job",
+        "competitor": "Coursera",
+        "feature": "Career certificates",
+        "pricing_tier": "Subscription",
+        "opportunity": "Job-outcome focused skill paths",
+        "severity": 9,
+        "willingness_to_pay": 8,
+        "competition_intensity": 7,
+        "evidence_count": 14,
+    },
+    {
+        "segment": "Career switchers",
+        "pain_point": "Generic projects don't impress hiring managers",
+        "competitor": "Codecademy",
+        "feature": "Capstone projects",
+        "pricing_tier": "Freemium",
+        "opportunity": "Portfolio with real-world client briefs",
+        "severity": 8,
+        "willingness_to_pay": 7,
+        "competition_intensity": 5,
+        "evidence_count": 11,
+    },
+    {
+        "segment": "Bootcamp graduates",
+        "pain_point": "Can't land first job after bootcamp",
+        "competitor": "LinkedIn",
+        "feature": "Job search",
+        "pricing_tier": "Free",
+        "opportunity": "Bootcamp grad job-readiness program",
+        "severity": 9,
+        "willingness_to_pay": 8,
+        "competition_intensity": 6,
+        "evidence_count": 12,
+    },
+    {
+        "segment": "Bootcamp graduates",
+        "pain_point": "Imposter syndrome with no real experience",
+        "competitor": "Reddit",
+        "feature": "Communities",
+        "pricing_tier": "Free",
+        "opportunity": "Mentor-led portfolio reviews",
+        "severity": 7,
+        "willingness_to_pay": 5,
+        "competition_intensity": 3,
+        "evidence_count": 7,
+    },
+    {
+        "segment": "Working professionals",
+        "pain_point": "No time for full courses while working",
+        "competitor": "Maven",
+        "feature": "Cohort courses",
+        "pricing_tier": "Paid",
+        "opportunity": "Micro-learning lunch breaks",
+        "severity": 8,
+        "willingness_to_pay": 7,
+        "competition_intensity": 4,
+        "evidence_count": 10,
+    },
+    {
+        "segment": "Working professionals",
+        "pain_point": "Need to upskill in AI fast",
+        "competitor": "DeepLearning.AI",
+        "feature": "AI specializations",
+        "pricing_tier": "Subscription",
+        "opportunity": "AI for non-engineers fast track",
+        "severity": 9,
+        "willingness_to_pay": 9,
+        "competition_intensity": 6,
+        "evidence_count": 15,
+    },
+    {
+        "segment": "Self-taught learners",
+        "pain_point": "Hard to know what to learn next",
+        "competitor": "YouTube",
+        "feature": "Tutorials",
+        "pricing_tier": "Free",
+        "opportunity": "Personalized learning roadmap",
+        "severity": 8,
+        "willingness_to_pay": 5,
+        "competition_intensity": 5,
+        "evidence_count": 9,
+    },
+    {
+        "segment": "Self-taught learners",
+        "pain_point": "No feedback on the work I produce",
+        "competitor": "ChatGPT",
+        "feature": "Tutoring",
+        "pricing_tier": "Freemium",
+        "opportunity": "AI project review tutor",
+        "severity": 7,
+        "willingness_to_pay": 6,
+        "competition_intensity": 5,
+        "evidence_count": 8,
+    },
+    {
+        "segment": "Aspiring PMs",
+        "pain_point": "PM theory doesn't translate to interviews",
+        "competitor": "Reforge",
+        "feature": "PM courses",
+        "pricing_tier": "Paid",
+        "opportunity": "Mock PM interview simulator",
+        "severity": 9,
+        "willingness_to_pay": 8,
+        "competition_intensity": 4,
+        "evidence_count": 12,
+    },
+    {
+        "segment": "Aspiring PMs",
+        "pain_point": "Hard to demonstrate PM craft without a job",
+        "competitor": "Lenny's newsletter",
+        "feature": "Articles",
+        "pricing_tier": "Subscription",
+        "opportunity": "Build-in-public PM portfolio",
+        "severity": 8,
+        "willingness_to_pay": 7,
+        "competition_intensity": 5,
+        "evidence_count": 10,
+    },
+    {
+        "segment": "L&D managers",
+        "pain_point": "Can't prove training ROI to leadership",
+        "competitor": "LinkedIn Learning",
+        "feature": "Learning paths",
+        "pricing_tier": "Enterprise",
+        "opportunity": "Skills-to-business-outcome analytics",
+        "severity": 9,
+        "willingness_to_pay": 9,
+        "competition_intensity": 7,
+        "evidence_count": 13,
+    },
+    {
+        "segment": "L&D managers",
+        "pain_point": "Course catalogs feel stale and impersonal",
+        "competitor": "Pluralsight",
+        "feature": "Course library",
+        "pricing_tier": "Enterprise",
+        "opportunity": "Dynamic role-based skill graphs",
+        "severity": 8,
+        "willingness_to_pay": 8,
+        "competition_intensity": 6,
+        "evidence_count": 11,
+    },
+]
+
+
+DEMO_DATASETS = {
+    "product": {
+        "label": "Product tools",
+        "description": "Segments and pains across product, design, and research tools.",
+        "rows": PRODUCT_ROWS,
+    },
+    "edtech": {
+        "label": "EdTech & self-learning",
+        "description": "Career switchers, working pros, L&D — where today's courses fall short.",
+        "rows": EDTECH_ROWS,
+    },
+}
+
+DEFAULT_DATASET = "product"
+
+
+def get_dataset(key: str | None):
+    if not key:
+        return DEMO_DATASETS[DEFAULT_DATASET]
+    if key not in DEMO_DATASETS:
+        return None
+    return DEMO_DATASETS[key]

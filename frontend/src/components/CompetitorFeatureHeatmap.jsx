@@ -43,19 +43,25 @@ export default function CompetitorFeatureHeatmap({ data }) {
       </div>
 
       <div className="overflow-auto">
-        <table className="w-full text-xs border-separate border-spacing-0">
+        <table className="text-xs border-separate border-spacing-0">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white text-left font-medium text-ink-muted px-2 py-2">
+              <th className="sticky left-0 z-10 bg-white text-left font-medium text-ink-muted px-2 pb-2 align-bottom">
                 Competitor
               </th>
               {features.map((f) => (
                 <th
                   key={f}
-                  className="px-2 py-2 align-bottom text-left font-medium text-ink-muted whitespace-nowrap"
+                  className="px-0 pb-2 align-bottom"
                   title={f}
                 >
-                  <div className="origin-bottom-left -rotate-45 translate-y-2 truncate max-w-[140px]">
+                  <div
+                    className="mx-auto font-medium text-ink-muted whitespace-nowrap"
+                    style={{
+                      writingMode: "vertical-rl",
+                      transform: "rotate(180deg)",
+                    }}
+                  >
                     {f}
                   </div>
                 </th>

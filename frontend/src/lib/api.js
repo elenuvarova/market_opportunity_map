@@ -22,9 +22,25 @@ export function healthCheck() {
   return request("/health");
 }
 
-export function loadDemoData() {
-  return request("/demo");
+export function loadDemoData(key) {
+  const qs = key ? `?dataset=${encodeURIComponent(key)}` : "";
+  return request(`/demo${qs}`);
 }
+
+export const DEMO_DATASETS = [
+  {
+    key: "product",
+    label: "Product tools",
+    description:
+      "Segments and pains across product, design, and research tools.",
+  },
+  {
+    key: "edtech",
+    label: "EdTech & self-learning",
+    description:
+      "Career switchers, working pros, L&D — where today's courses fall short.",
+  },
+];
 
 export function analyzeCsv(file) {
   const form = new FormData();

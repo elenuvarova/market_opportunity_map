@@ -5,13 +5,13 @@ import os
 from typing import Iterable
 
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from analysis import ValidationError, analyze_market_data
-from demo_data import DEMO_ROWS
+from demo_data import DEMO_DATASETS, get_dataset
 
-app = FastAPI(title="Market Opportunity Map API", version="0.1.0")
+app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
 
 
 def _allowed_origins() -> Iterable[str]:
@@ -39,10 +39,28 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/datasets")
+def datasets() -> dict:
+    return {
+        "datasets": [
+            {"key": key, "label": d["label"], "description": d["description"]}
+            for key, d in DEMO_DATASETS.items()
+        ]
+    }
+
+
 @app.get("/demo")
-def demo() -> dict:
-    df = pd.DataFrame(DEMO_ROWS)
-    return analyze_market_data(df)
+def demo(dataset: str | None = Query(default=None)) -> dict:
+    ds = get_dataset(dataset)
+    if ds is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown dataset '{dataset}'. Available: {', '.join(DEMO_DATASETS)}",
+        )
+    df = pd.DataFrame(ds["rows"])
+    result = analyze_market_data(df)
+    result["dataset"] = {"label": ds["label"], "description": ds["description"]}
+    return result
 
 
 @app.post("/analyze")

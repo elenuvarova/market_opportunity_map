@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { analyzeCsv, loadDemoData } from "./lib/api";
+import { analyzeCsv, loadDemoData, DEMO_DATASETS } from "./lib/api";
 import FileUpload from "./components/FileUpload";
 import EmptyState from "./components/EmptyState";
 import ErrorMessage from "./components/ErrorMessage";
@@ -9,6 +9,7 @@ import NodeDetailsPanel from "./components/NodeDetailsPanel";
 import OpportunityMatrix from "./components/OpportunityMatrix";
 import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
+import DemoMenu from "./components/DemoMenu";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -16,15 +17,18 @@ export default function App() {
   const [error, setError] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [sourceLabel, setSourceLabel] = useState(null);
+  const [activeDemoKey, setActiveDemoKey] = useState(null);
   const fileInput = useRef(null);
 
-  const runDemo = async () => {
+  const runDemo = async (key) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await loadDemoData();
+      const result = await loadDemoData(key);
       setData(result);
-      setSourceLabel("Demo data");
+      const meta = DEMO_DATASETS.find((d) => d.key === key);
+      setSourceLabel(`Demo · ${meta?.label || key || "data"}`);
+      setActiveDemoKey(key || null);
       setSelectedNode(null);
     } catch (err) {
       setError(err.message);
@@ -40,6 +44,7 @@ export default function App() {
       const result = await analyzeCsv(file);
       setData(result);
       setSourceLabel(file.name);
+      setActiveDemoKey(null);
       setSelectedNode(null);
     } catch (err) {
       setError(err.message);
@@ -51,6 +56,7 @@ export default function App() {
   const reset = () => {
     setData(null);
     setSourceLabel(null);
+    setActiveDemoKey(null);
     setSelectedNode(null);
     setError(null);
   };
@@ -88,14 +94,12 @@ export default function App() {
             >
               Upload CSV
             </button>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={runDemo}
+            <DemoMenu
+              onPick={runDemo}
               disabled={loading}
-            >
-              {loading ? "Analyzing…" : "Try demo data"}
-            </button>
+              loading={loading}
+              activeKey={activeDemoKey}
+            />
             {data && (
               <button
                 type="button"
