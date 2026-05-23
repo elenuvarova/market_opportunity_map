@@ -8,7 +8,15 @@ import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from analysis import ValidationError, analyze_market_data
+from analysis import (
+    ValidationError,
+    analyze_market_data,
+    build_breakdown,
+    clean_dataframe,
+    calculate_opportunity_scores,
+    find_opportunity_row,
+    validate_dataframe,
+)
 from demo_data import DEMO_DATASETS, get_dataset
 
 app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
@@ -61,6 +69,30 @@ def demo(dataset: str | None = Query(default=None)) -> dict:
     result = analyze_market_data(df)
     result["dataset"] = {"label": ds["label"], "description": ds["description"]}
     return result
+
+
+@app.get("/opportunities/{opportunity_id}/breakdown")
+def opportunity_breakdown(
+    opportunity_id: str,
+    dataset: str | None = Query(default=None),
+) -> dict:
+    ds = get_dataset(dataset)
+    if ds is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown dataset '{dataset}'. Available: {', '.join(DEMO_DATASETS)}",
+        )
+    df = pd.DataFrame(ds["rows"])
+    validate_dataframe(df)
+    df = clean_dataframe(df)
+    df = calculate_opportunity_scores(df)
+    row = find_opportunity_row(df, opportunity_id)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Opportunity '{opportunity_id}' not found in dataset '{ds['label']}'",
+        )
+    return build_breakdown(row)
 
 
 @app.post("/analyze")

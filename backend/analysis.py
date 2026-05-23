@@ -73,17 +73,116 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+SCORE_WEIGHTS = {
+    "severity": 0.35,
+    "willingness_to_pay": 0.25,
+    "competition_intensity": 0.25,
+    "evidence_count": 0.15,
+}
+
+FORMULA_NOTE = (
+    "score = (severity × 0.35 + WTP × 0.25 + (10 − competition_intensity) × 0.25 + "
+    "min(evidence_count / 10, 1) × 10 × 0.15) × 10, rounded and clipped to 0–100"
+)
+
+
 def calculate_opportunity_scores(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     evidence_capped = (df["evidence_count"] / 10).clip(upper=1) * 10
     raw = (
-        df["severity"] * 0.35
-        + df["willingness_to_pay"] * 0.25
-        + (10 - df["competition_intensity"]) * 0.25
-        + evidence_capped * 0.15
+        df["severity"] * SCORE_WEIGHTS["severity"]
+        + df["willingness_to_pay"] * SCORE_WEIGHTS["willingness_to_pay"]
+        + (10 - df["competition_intensity"]) * SCORE_WEIGHTS["competition_intensity"]
+        + evidence_capped * SCORE_WEIGHTS["evidence_count"]
     )
     df["opportunity_score"] = (raw * 10).round().astype(int).clip(lower=0, upper=100)
     return df
+
+
+def decision_bucket(score: int) -> tuple[str, str]:
+    if score >= 75:
+        return ("strong", "Strong opportunity")
+    if score >= 60:
+        return ("worth_validating", "Worth validating")
+    if score >= 40:
+        return ("needs_more_research", "Needs more research")
+    return ("low_priority", "Low priority")
+
+
+def score_breakdown(severity: int, wtp: int, competition: int, evidence: int) -> list[dict]:
+    """Decompose a score into 4 components, each contribution scaled to 0–100
+    (same scale as the final opportunity_score) so bars sum to the score."""
+    evidence_capped = min(evidence / 10, 1) * 10
+    return [
+        {
+            "name": "severity",
+            "label": "Severity",
+            "raw_value": int(severity),
+            "raw_value_max": 10,
+            "weight": SCORE_WEIGHTS["severity"],
+            "contribution": round(severity * SCORE_WEIGHTS["severity"] * 10, 1),
+            "note": "How bad the pain is for this segment (1–10).",
+        },
+        {
+            "name": "willingness_to_pay",
+            "label": "Willingness to pay",
+            "raw_value": int(wtp),
+            "raw_value_max": 10,
+            "weight": SCORE_WEIGHTS["willingness_to_pay"],
+            "contribution": round(wtp * SCORE_WEIGHTS["willingness_to_pay"] * 10, 1),
+            "note": "How much customers in this segment would pay to fix it (1–10).",
+        },
+        {
+            "name": "competition_intensity",
+            "label": "Low competition",
+            "raw_value": int(competition),
+            "raw_value_max": 10,
+            "weight": SCORE_WEIGHTS["competition_intensity"],
+            "contribution": round((10 - competition) * SCORE_WEIGHTS["competition_intensity"] * 10, 1),
+            "note": f"Crowded space scores low. Inverted: contribution = (10 − {int(competition)}) × {SCORE_WEIGHTS['competition_intensity']} × 10.",
+            "inverted": True,
+        },
+        {
+            "name": "evidence_count",
+            "label": "Evidence strength",
+            "raw_value": int(evidence),
+            "raw_value_max": None,
+            "weight": SCORE_WEIGHTS["evidence_count"],
+            "contribution": round(evidence_capped * SCORE_WEIGHTS["evidence_count"] * 10, 1),
+            "note": f"Number of distinct credible sources, capped at 10. min({int(evidence)} / 10, 1) × 10 × {SCORE_WEIGHTS['evidence_count']} × 10.",
+            "capped_at": 10,
+        },
+    ]
+
+
+def find_opportunity_row(df: pd.DataFrame, opportunity_id: str) -> dict | None:
+    for _, row in df.iterrows():
+        if slugify(row["opportunity"]) == opportunity_id:
+            return row.to_dict()
+    return None
+
+
+def build_breakdown(row: dict) -> dict:
+    score = int(row["opportunity_score"])
+    bucket_key, bucket_label = decision_bucket(score)
+    return {
+        "id": slugify(row["opportunity"]),
+        "opportunity": row["opportunity"],
+        "segment": row["segment"],
+        "pain_point": row["pain_point"],
+        "competitor": row["competitor"],
+        "score": score,
+        "bucket_key": bucket_key,
+        "bucket_label": bucket_label,
+        "formula_note": FORMULA_NOTE,
+        "components": score_breakdown(
+            row["severity"],
+            row["willingness_to_pay"],
+            row["competition_intensity"],
+            row["evidence_count"],
+        ),
+        "supporting_signals": _enrich_sources(row.get("sources", [])),
+    }
 
 
 def _node_id(node_type: str, label: str) -> str:
