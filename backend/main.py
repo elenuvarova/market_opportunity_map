@@ -12,6 +12,7 @@ from analysis import (
     ValidationError,
     analyze_market_data,
     build_breakdown,
+    build_brief,
     clean_dataframe,
     calculate_opportunity_scores,
     find_opportunity_row,
@@ -93,6 +94,30 @@ def opportunity_breakdown(
             detail=f"Opportunity '{opportunity_id}' not found in dataset '{ds['label']}'",
         )
     return build_breakdown(row)
+
+
+@app.get("/opportunities/{opportunity_id}/brief")
+def opportunity_brief(
+    opportunity_id: str,
+    dataset: str | None = Query(default=None),
+) -> dict:
+    ds = get_dataset(dataset)
+    if ds is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown dataset '{dataset}'. Available: {', '.join(DEMO_DATASETS)}",
+        )
+    df = pd.DataFrame(ds["rows"])
+    validate_dataframe(df)
+    df = clean_dataframe(df)
+    df = calculate_opportunity_scores(df)
+    row = find_opportunity_row(df, opportunity_id)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Opportunity '{opportunity_id}' not found in dataset '{ds['label']}'",
+        )
+    return build_brief(row, df)
 
 
 @app.post("/analyze")

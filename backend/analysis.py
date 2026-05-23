@@ -162,6 +162,100 @@ def find_opportunity_row(df: pd.DataFrame, opportunity_id: str) -> dict | None:
     return None
 
 
+def build_competitive_landscape(df: pd.DataFrame, segment: str, max_competitors: int = 3) -> list[dict]:
+    """For a given segment, return the top competitors active there plus the
+    pain points in that segment they don't appear next to. Used in the
+    Opportunity Brief to anchor 'what they don't cover'."""
+    segment_rows = df[df["segment"] == segment]
+    if segment_rows.empty:
+        return []
+
+    all_pains = set(segment_rows["pain_point"].unique().tolist())
+
+    by_competitor: dict[str, dict[str, set]] = {}
+    for _, r in segment_rows.iterrows():
+        bucket = by_competitor.setdefault(
+            r["competitor"], {"features": set(), "pains": set(), "pricing_tiers": set()}
+        )
+        bucket["features"].add(r["feature"])
+        bucket["pains"].add(r["pain_point"])
+        bucket["pricing_tiers"].add(r["pricing_tier"])
+
+    items = []
+    for competitor, b in by_competitor.items():
+        items.append(
+            {
+                "competitor": competitor,
+                "features_covered": sorted(b["features"]),
+                "pricing_tiers": sorted(b["pricing_tiers"]),
+                "pains_addressed": sorted(b["pains"]),
+                "pains_not_addressed": sorted(all_pains - b["pains"]),
+            }
+        )
+    items.sort(key=lambda c: (-len(c["features_covered"]), c["competitor"]))
+    return items[:max_competitors]
+
+
+_NEXT_STEP_TEMPLATES = {
+    "strong": "Build a 2-week prototype with 5–10 customers from this segment.",
+    "worth_validating": "Run 5 customer interviews focused on: \"{pain}\".",
+    "needs_more_research": "Collect 10+ additional signals from sources like {sources}.",
+    "low_priority": "Park. Re-evaluate in 3 months when more signals accumulate.",
+}
+
+_DEFAULT_OPEN_QUESTIONS = [
+    "Market sizing — how many customers in this segment actually feel this pain enough to switch?",
+    "Retention — does solving this pain create stickiness, or is it a one-shot need?",
+    "Willingness to pay — does the WTP score hold up against a real $/mo question, or is it directional?",
+]
+
+
+def build_brief(row: dict, df: pd.DataFrame) -> dict:
+    """Compose a one-page opportunity brief: title, one-liner, score block,
+    top signals, competitive landscape, open questions, recommended next step."""
+    breakdown = build_breakdown(row)
+    bucket_key = breakdown["bucket_key"]
+
+    landscape = build_competitive_landscape(df, row["segment"])
+    signals = breakdown["supporting_signals"]
+    top_signals = signals[:3]
+
+    source_types = sorted({s["source_type"] for s in signals}) if signals else []
+    if not source_types:
+        source_types = ["HackerNews", "Reddit", "industry reports"]
+    sources_hint = ", ".join(source_types[:3])
+
+    template = _NEXT_STEP_TEMPLATES[bucket_key]
+    next_step = template.format(pain=row["pain_point"], sources=sources_hint)
+
+    return {
+        "id": breakdown["id"],
+        "title": row["opportunity"],
+        "one_liner": f"{row['segment']} struggling with: {row['pain_point']}.",
+        "segment": row["segment"],
+        "pain_point": row["pain_point"],
+        "competitor_in_row": row["competitor"],
+        "feature_in_row": row["feature"],
+        "pricing_tier_in_row": row["pricing_tier"],
+        "score_block": {
+            "score": breakdown["score"],
+            "bucket_key": breakdown["bucket_key"],
+            "bucket_label": breakdown["bucket_label"],
+            "components": breakdown["components"],
+            "formula_note": breakdown["formula_note"],
+        },
+        "top_signals": top_signals,
+        "total_signals": len(signals),
+        "competitive_landscape": landscape,
+        "open_questions": list(_DEFAULT_OPEN_QUESTIONS),
+        "next_step": {
+            "bucket_key": bucket_key,
+            "bucket_label": breakdown["bucket_label"],
+            "recommendation": next_step,
+        },
+    }
+
+
 def build_breakdown(row: dict) -> dict:
     score = int(row["opportunity_score"])
     bucket_key, bucket_label = decision_bucket(score)
