@@ -127,12 +127,25 @@ This repo includes a [`render.yaml`](render.yaml) Blueprint. In Render: **New �
 - **`market-opportunity-map-api`** — Python web service. Root dir `backend/`, builds with `pip install -r requirements.txt`, starts with `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 - **`market-opportunity-map-web`** — Static site. Root dir `frontend/`, builds with `npm install && npm run build`, publishes `dist/`.
 
-After the first deploy:
+### After the first deploy — required wiring
 
-1. Copy the API service URL (e.g. `https://market-opportunity-map-api.onrender.com`).
-2. Set `VITE_API_URL` on the static site to that URL, then redeploy the static site so the built bundle hits the real backend.
-3. Set `FRONTEND_ORIGIN` on the API service to the static site URL so CORS allows it.
+The two services don't know about each other until you set two env vars. **Without this step, the frontend will load but show `Got HTML instead of JSON` when you click a demo** (it's calling its own static site instead of the API).
+
+1. In Render → **`market-opportunity-map-api`** → **Environment** → set:
+   ```
+   FRONTEND_ORIGIN=https://market-opportunity-map-web.onrender.com
+   ```
+   (or your actual static site URL). This adds it to the API's CORS allowlist.
+
+2. In Render → **`market-opportunity-map-web`** → **Environment** → set:
+   ```
+   VITE_API_URL=https://market-opportunity-map-api.onrender.com
+   ```
+   (or your actual API URL).
+
+3. **Manual Deploy → Clear build cache & deploy** on the static site. Vite bakes `VITE_API_URL` into the bundle at build time, so a fresh build is required.
 
 Notes:
 - Free Render services sleep after inactivity, so the first request after idle takes ~30s.
 - The frontend bundles `react-force-graph-2d` and D3 (~215KB gzipped) — fine for free tier, but visible on cold loads.
+- Render's free Postgres instances expire after 30 days. This app doesn't use a database, so that doesn't apply here — just noting it for future extensions.

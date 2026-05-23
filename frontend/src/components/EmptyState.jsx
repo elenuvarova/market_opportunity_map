@@ -1,4 +1,5 @@
 import { DEMO_DATASETS } from "../lib/api";
+import CsvFormatCard from "./CsvFormatCard";
 
 export default function EmptyState({ onTryDemo, onPickFile, loading }) {
   return (
@@ -36,6 +37,10 @@ export default function EmptyState({ onTryDemo, onPickFile, loading }) {
         ))}
       </div>
 
+      <div className="mt-6 max-w-2xl mx-auto">
+        <CsvFormatCard />
+      </div>
+
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <button
           type="button"
@@ -45,9 +50,6 @@ export default function EmptyState({ onTryDemo, onPickFile, loading }) {
         >
           Upload your CSV
         </button>
-        <a className="btn-ghost" href="/sample_market_data.csv" download>
-          Download sample CSV
-        </a>
       </div>
     </section>
   );
