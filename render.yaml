@@ -11,7 +11,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: https://market-opportunity-map-web.onrender.com
 
   - type: web
     name: market-opportunity-map-web
@@ -21,7 +21,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://market-opportunity-map-api.onrender.com
     routes:
       - type: rewrite
         source: /*
