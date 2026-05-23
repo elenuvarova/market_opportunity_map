@@ -103,12 +103,12 @@ function Signal({ signal }) {
         )}
       </div>
       {signal.note && (
-        <p className="text-xs text-ink-soft leading-snug">
+        <p className="text-xs text-ink-soft leading-snug break-words">
           {signal.note}
-          {signal.is_paraphrase && (
-            <span className="ml-1 text-[10px] text-ink-muted">(paraphrase)</span>
-          )}
         </p>
+      )}
+      {signal.is_paraphrase && signal.note && (
+        <p className="mt-1 text-[10px] text-ink-muted">paraphrase</p>
       )}
     </li>
   );

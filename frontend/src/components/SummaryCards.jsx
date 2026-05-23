@@ -1,10 +1,16 @@
 function Stat({ label, value, hint }) {
+  const isNumeric = typeof value === "number";
   return (
     <div className="card p-5">
       <div className="text-xs font-medium uppercase tracking-wide text-ink-muted">
         {label}
       </div>
-      <div className="mt-2 text-2xl font-semibold text-ink leading-tight">
+      <div
+        className={`mt-2 font-semibold text-ink leading-tight break-words text-balance ${
+          isNumeric ? "text-2xl tabular-nums" : "text-lg"
+        }`}
+        title={isNumeric ? undefined : String(value)}
+      >
         {value}
       </div>
       {hint && <div className="mt-1 text-xs text-ink-muted">{hint}</div>}
