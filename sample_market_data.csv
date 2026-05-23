@@ -1,13 +1,13 @@
 segment,pain_point,competitor,feature,pricing_tier,opportunity,severity,willingness_to_pay,competition_intensity,evidence_count
-Freelance designers,Hard to present design value to clients,Canva,Presentation templates,Freemium,Value-based design case builder,8,7,5,12
-Startup founders,Hard to choose MVP scope,Notion,Templates,Freemium,MVP scope decision canvas,9,8,4,15
-Product managers,Roadmap not linked to strategy,Aha,Roadmap planning,Paid,Strategy-to-roadmap visual map,9,8,7,10
-Product managers,Hard to defend roadmap to stakeholders,Productboard,Prioritization,Paid,Stakeholder alignment canvas,8,7,6,9
-UX researchers,Insights scattered across tools,Dovetail,Research repository,Paid,Insight-to-opportunity map,8,7,6,9
-UX researchers,Insights ignored by product teams,Dovetail,Sharing,Paid,Insight impact tracker,7,6,4,7
-Indie hackers,Hard to find market gaps,Product Hunt,Discovery,Free,Market gap visualizer,7,6,3,8
-Indie hackers,Hard to validate idea before building,Reddit,Communities,Free,Lightweight validation board,8,5,4,6
-Design leads,Design debt is hard to explain,Figma,Design system,Paid,Design debt impact map,8,7,5,11
-Design leads,Hard to measure design team impact,Figma,Analytics,Enterprise,Design impact dashboard,7,7,4,8
-Heads of Product,No visibility into bets across squads,Aha,Portfolio view,Enterprise,Cross-squad bets map,9,9,5,13
-Heads of Product,Strategy doesn't reach squads,Productboard,Strategy planning,Enterprise,Strategy cascade tool,8,8,6,10
+Freelance designers,"Clients see design as decoration, not business value",Canva,Presentation templates,Freemium,Value-based design case builder,7,5,6,3
+Startup founders,Feature creep makes MVP scope balloon before launch,Notion,Templates,Freemium,MVP scope decision canvas,8,4,7,3
+Product managers,Roadmap items don't trace back to strategic goals,Aha,Roadmap planning,Paid,Strategy-to-roadmap visual map,7,8,8,3
+Product managers,Stakeholders keep pushing back on roadmap priorities,Productboard,Prioritization,Paid,Stakeholder alignment canvas,8,8,8,3
+UX researchers,"Research lives in scattered docs across Notion, Drive, and Slack",Dovetail,Research repository,Paid,Insight-to-opportunity map,7,7,8,3
+UX researchers,Research insights get filed but never influence product decisions,Dovetail,Sharing,Paid,Insight impact tracker,8,6,6,3
+Indie hackers,Hard to find market gaps worth building for,Product Hunt,Discovery,Free,Market gap visualizer,6,5,6,3
+Indie hackers,Hard to validate an idea before building it,Reddit,Communities,Free,Lightweight validation board,8,5,7,3
+Design leads,Hard to make stakeholders care about design debt,Figma,Design system,Paid,Design debt impact map,7,6,4,3
+Design leads,Hard to quantify design team impact,Figma,Analytics,Enterprise,Design impact dashboard,8,7,5,3
+Heads of Product,No visibility into bets across squads,Aha,Portfolio view,Enterprise,Cross-squad bets map,8,9,7,2
+Heads of Product,Strategy doesn't make it down to squads,Productboard,Strategy planning,Enterprise,Strategy cascade tool,8,9,6,3

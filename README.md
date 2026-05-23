@@ -113,11 +113,13 @@ Frontend runs on <http://localhost:5173>. The Vite dev server proxies `/api/*` t
 ## Endpoints
 
 - `GET /health` — `{ "status": "ok" }`
-- `GET /demo` — analyzed built-in demo data
+- `GET /datasets` — list of available demo datasets: `[{ "key", "label", "description" }, ...]`
+- `GET /demo?dataset=<key>` — analyzed built-in demo data. `dataset` is optional and defaults to `product`; current keys are `product` and `edtech`. Source URLs for each row are in [`backend/demo_data.py`](backend/demo_data.py).
 - `POST /analyze` — multipart `file=<csv>`; returns the same shape as `/demo`
 
 Errors:
 - `400` — file isn't a CSV or can't be parsed
+- `404` — unknown `dataset` key on `/demo`
 - `422` — CSV missing required columns or empty after cleaning
 
 ## Deploy to Render
@@ -127,23 +129,16 @@ This repo includes a [`render.yaml`](render.yaml) Blueprint. In Render: **New �
 - **`market-opportunity-map-api`** — Python web service. Root dir `backend/`, builds with `pip install -r requirements.txt`, starts with `uvicorn main:app --host 0.0.0.0 --port $PORT`.
 - **`market-opportunity-map-web`** — Static site. Root dir `frontend/`, builds with `npm install && npm run build`, publishes `dist/`.
 
-### After the first deploy — required wiring
+### Wiring frontend ↔ backend
 
-The two services don't know about each other until you set two env vars. **Without this step, the frontend will load but show `Got HTML instead of JSON` when you click a demo** (it's calling its own static site instead of the API).
+Both env vars are baked into [`render.yaml`](render.yaml) with the default `*.onrender.com` hostnames for these two services, so Blueprint sync wires them up automatically:
 
-1. In Render → **`market-opportunity-map-api`** → **Environment** → set:
-   ```
-   FRONTEND_ORIGIN=https://market-opportunity-map-web.onrender.com
-   ```
-   (or your actual static site URL). This adds it to the API's CORS allowlist.
+- `VITE_API_URL` on the static site → the API service URL (Vite bakes this into the bundle at build time, so the static site rebuilds on change).
+- `FRONTEND_ORIGIN` on the API service → the static site URL (added to the API's CORS allowlist).
 
-2. In Render → **`market-opportunity-map-web`** → **Environment** → set:
-   ```
-   VITE_API_URL=https://market-opportunity-map-api.onrender.com
-   ```
-   (or your actual API URL).
+If you forked the repo and your services got different hostnames, edit the two `value:` lines in `render.yaml` to match and push — Render re-syncs the Blueprint and redeploys both services.
 
-3. **Manual Deploy → Clear build cache & deploy** on the static site. Vite bakes `VITE_API_URL` into the bundle at build time, so a fresh build is required.
+If you ever see `Got HTML instead of JSON` in the UI, that means the static site bundle doesn't have `VITE_API_URL` baked in — trigger **Manual Deploy → Clear build cache & deploy** on the static site.
 
 Notes:
 - Free Render services sleep after inactivity, so the first request after idle takes ~30s.
