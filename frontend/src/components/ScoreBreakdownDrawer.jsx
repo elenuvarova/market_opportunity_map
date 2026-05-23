@@ -133,6 +133,7 @@ export default function ScoreBreakdownDrawer({ opportunity, datasetKey, onClose 
         aria-hidden={!open}
       />
       <aside
+        data-tour-id="drawer"
         className={`fixed top-0 right-0 h-full w-full max-w-[480px] bg-white border-l border-slate-200 shadow-cardLg z-40 transform transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}

@@ -83,6 +83,7 @@ export default function OpportunitiesTable({ opportunities, onSelectOpportunity,
                           target="_blank"
                           rel="noreferrer noopener"
                           onClick={(e) => e.stopPropagation()}
+                          data-tour-id={i === 0 ? "brief-link-top" : undefined}
                           className="text-[11px] text-ink-soft hover:text-ink underline-offset-2 hover:underline"
                         >
                           Brief →

@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { analyzeCsv, loadDemoData, DEMO_DATASETS } from "./lib/api";
 import FileUpload from "./components/FileUpload";
 import EmptyState from "./components/EmptyState";
@@ -11,6 +12,7 @@ import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
 import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
+import TourController from "./components/TourController";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -20,6 +22,8 @@ export default function App() {
   const [sourceLabel, setSourceLabel] = useState(null);
   const [activeDemoKey, setActiveDemoKey] = useState(null);
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
+  const [tourRunning, setTourRunning] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInput = useRef(null);
 
   const runDemo = async (key) => {
@@ -38,6 +42,25 @@ export default function App() {
       setLoading(false);
     }
   };
+
+  // Auto-start tour when the URL has ?tour=1 and the product dataset
+  // is loaded. We strip the param after starting so reloads don't re-fire.
+  useEffect(() => {
+    if (searchParams.get("tour") !== "1") return;
+    if (!data) {
+      runDemo("product").then(() => {
+        // tour will fire on the next pass when data is set
+      });
+      return;
+    }
+    if (activeDemoKey === "product" && !tourRunning) {
+      setTourRunning(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("tour");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, data, activeDemoKey]);
 
   const runUpload = async (file) => {
     setLoading(true);
@@ -103,6 +126,16 @@ export default function App() {
               loading={loading}
               activeKey={activeDemoKey}
             />
+            {data && activeDemoKey === "product" && !tourRunning && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setTourRunning(true)}
+                disabled={loading}
+              >
+                Take a tour
+              </button>
+            )}
             {data && (
               <button
                 type="button"
@@ -208,6 +241,15 @@ export default function App() {
         datasetKey={activeDemoKey}
         onClose={() => setSelectedOpportunity(null)}
       />
+
+      {tourRunning && data && (
+        <TourController
+          data={data}
+          onSelectNode={setSelectedNode}
+          onSelectOpportunity={setSelectedOpportunity}
+          onClose={() => setTourRunning(false)}
+        />
+      )}
 
       <footer className="mx-auto max-w-7xl px-6 pb-10 pt-2 text-xs text-ink-muted">
         Market Opportunity Map · MVP build

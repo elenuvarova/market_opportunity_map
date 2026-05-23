@@ -69,7 +69,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
   };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden" data-tour-id="network-map">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-3">
         <div>
           <h3 className="text-sm font-semibold text-ink">Network map</h3>
