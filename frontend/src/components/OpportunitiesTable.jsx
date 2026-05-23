@@ -1,8 +1,27 @@
 function decisionFor(score) {
-  if (score >= 75) return { label: "Strong opportunity", color: "bg-emerald-100 text-emerald-800" };
-  if (score >= 60) return { label: "Worth validating", color: "bg-yellow-100 text-yellow-800" };
-  if (score >= 40) return { label: "Needs more research", color: "bg-orange-100 text-orange-800" };
-  return { label: "Low priority", color: "bg-slate-100 text-slate-600" };
+  if (score >= 75)
+    return {
+      label: "Strong opportunity",
+      color: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
+      dot: "bg-emerald-500",
+    };
+  if (score >= 60)
+    return {
+      label: "Worth validating",
+      color: "bg-yellow-50 text-yellow-800 ring-1 ring-yellow-200",
+      dot: "bg-yellow-500",
+    };
+  if (score >= 40)
+    return {
+      label: "Needs research",
+      color: "bg-orange-50 text-orange-800 ring-1 ring-orange-200",
+      dot: "bg-orange-500",
+    };
+  return {
+    label: "Low priority",
+    color: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+    dot: "bg-slate-400",
+  };
 }
 
 function ScoreBar({ score }) {
@@ -65,7 +84,7 @@ export default function OpportunitiesTable({
               <th className="text-right font-medium px-4 py-2">Comp.</th>
               <th className="text-right font-medium px-4 py-2">Ev.</th>
               <th className="text-left font-medium px-4 py-2">Score</th>
-              <th className="text-left font-medium px-4 py-2">Decision</th>
+              <th className="text-left font-medium px-4 py-2 min-w-[160px]">Decision</th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +121,10 @@ export default function OpportunitiesTable({
                   </td>
                   <td className="px-4 py-2.5">
                     <div className="flex flex-col items-start gap-1">
-                      <span className={`chip ${d.color}`}>{d.label}</span>
+                      <span className={`chip-decision ${d.color}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
+                        {d.label}
+                      </span>
                       {briefUrlFor(o.id) && (
                         <a
                           href={briefUrlFor(o.id)}

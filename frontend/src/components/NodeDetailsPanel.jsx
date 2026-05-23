@@ -66,11 +66,11 @@ export default function NodeDetailsPanel({ node, edges, nodes, onClose }) {
             {outgoing.slice(0, 6).map((e, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between gap-2 text-ink-soft"
+                className="flex items-center justify-between gap-2 text-ink-soft min-w-0"
               >
-                <span className="truncate">{e.target.label}</span>
+                <span className="truncate min-w-0">{e.target.label}</span>
                 <span
-                  className={`chip ${NODE_CHIP_CLASSES[e.target.type] || ""}`}
+                  className={`chip flex-shrink-0 ${NODE_CHIP_CLASSES[e.target.type] || ""}`}
                 >
                   {NODE_LABELS[e.target.type] || e.target.type}
                 </span>
@@ -89,11 +89,11 @@ export default function NodeDetailsPanel({ node, edges, nodes, onClose }) {
             {incoming.slice(0, 6).map((e, i) => (
               <li
                 key={i}
-                className="flex items-center justify-between gap-2 text-ink-soft"
+                className="flex items-center justify-between gap-2 text-ink-soft min-w-0"
               >
-                <span className="truncate">{e.source.label}</span>
+                <span className="truncate min-w-0">{e.source.label}</span>
                 <span
-                  className={`chip ${NODE_CHIP_CLASSES[e.source.type] || ""}`}
+                  className={`chip flex-shrink-0 ${NODE_CHIP_CLASSES[e.source.type] || ""}`}
                 >
                   {NODE_LABELS[e.source.type] || e.source.type}
                 </span>
