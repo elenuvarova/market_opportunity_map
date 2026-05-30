@@ -3,19 +3,39 @@ const RAW_BASE = import.meta.env.VITE_API_URL?.trim();
 // In prod with VITE_API_URL set: hit the backend service directly.
 const BASE = RAW_BASE ? RAW_BASE.replace(/\/$/, "") : "/api";
 
+function friendlyError(status, serverDetail) {
+  // Cap-specific user-friendly copy, falls back to server message.
+  if (status === 429) {
+    return "You're hitting the analyze/paste rate limit (15/min). Wait a minute and try again.";
+  }
+  if (status === 413) {
+    if (serverDetail?.toLowerCase().includes("csv")) {
+      return "CSV is over the 2 MB limit. Trim rows or split the file and try again.";
+    }
+    if (serverDetail?.toLowerCase().includes("text")) {
+      return "Pasted text is over the 100 KB-per-block limit. Trim to the most important quotes and try again.";
+    }
+    return serverDetail || "Upload is too large.";
+  }
+  if (status === 422 && serverDetail?.toLowerCase().includes("missing required")) {
+    return `${serverDetail} Need a hand? Download the sample CSV from the empty state.`;
+  }
+  return serverDetail || `Request failed (${status})`;
+}
+
 async function request(path, init) {
   const res = await fetch(`${BASE}${path}`, init);
   const text = await res.text();
 
   if (!res.ok) {
-    let detail = `Request failed (${res.status})`;
+    let detail;
     try {
       const body = JSON.parse(text);
-      if (body?.detail) detail = body.detail;
+      detail = body?.detail;
     } catch {
       // not JSON
     }
-    throw new Error(detail);
+    throw new Error(friendlyError(res.status, detail));
   }
 
   try {

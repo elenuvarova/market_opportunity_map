@@ -24,7 +24,7 @@ export default function DemoMenu({ onPick, disabled, loading, activeKey }) {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        {loading ? "Analyzing…" : "Try demo"}
+        {loading ? "Analyzing…" : activeKey ? "Switch demo" : "Try demo"}
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"

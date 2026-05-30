@@ -12,6 +12,7 @@ import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
 import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
+import DashboardSkeleton from "./components/DashboardSkeleton";
 import TourController, { isTourAvailable } from "./components/TourController";
 import PasteModal from "./components/PasteModal";
 import { saveCurrentData, clearCurrentData } from "./lib/sessionStore";
@@ -183,23 +184,21 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
-        <div className="md:hidden rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-ink-soft">
-          Best viewed on desktop — the force graph and the score-breakdown
-          drawer assume a wider screen.
-        </div>
-
+      <main id="main" className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
         {error && (
           <ErrorMessage message={error} onDismiss={() => setError(null)} />
         )}
 
-        {!data && (
+        {!data && !loading && (
           <EmptyState
             onTryDemo={runDemo}
             onPickFile={() => fileInput.current?.click()}
+            onOpenPaste={() => setPasteOpen(true)}
             loading={loading}
           />
         )}
+
+        {!data && loading && <DashboardSkeleton />}
 
         {data && dataSource === "paste" && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start justify-between gap-3">
@@ -225,7 +224,22 @@ export default function App() {
           <>
             <SummaryCards summary={data.summary} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Decision-ready artifact first — what a PM came here for. */}
+            <OpportunitiesTable
+              opportunities={data.opportunities}
+              onSelectOpportunity={setSelectedOpportunity}
+              datasetKey={activeDemoKey}
+              briefSource={dataSource === "demo" ? "demo" : "session"}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <OpportunityMatrix matrix={data.matrix} />
+              <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
+            </div>
+
+            {/* Exploratory map last — hidden on mobile in favor of the
+                ranked table and matrix above. */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <NetworkMap
                   nodes={data.nodes}
@@ -280,17 +294,12 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <OpportunityMatrix matrix={data.matrix} />
-              <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
+            {/* Mobile-only hint that the graph lives on desktop. */}
+            <div className="md:hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-ink-soft">
+              The interactive network map is desktop-only. The ranked
+              opportunities, matrix and heatmap above carry the same
+              insights for mobile reviewers.
             </div>
-
-            <OpportunitiesTable
-              opportunities={data.opportunities}
-              onSelectOpportunity={setSelectedOpportunity}
-              datasetKey={activeDemoKey}
-              briefSource={dataSource === "demo" ? "demo" : "session"}
-            />
           </>
         )}
       </main>
