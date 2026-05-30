@@ -11,11 +11,20 @@ import {
   Cell,
 } from "recharts";
 
+// Keep hexes in sync with COMPONENT_BAR_COLORS / dot classes in decisionStyles.js.
+// Recharts needs raw values, not Tailwind classnames.
+const SCORE_HEX = {
+  strong: "#10b981",        // emerald-500
+  worth_validating: "#eab308", // yellow-500
+  needs_more_research: "#f97316", // orange-500
+  low_priority: "#94a3b8",   // slate-400
+};
+
 function scoreColor(score) {
-  if (score >= 75) return "#16a34a";
-  if (score >= 60) return "#eab308";
-  if (score >= 40) return "#f97316";
-  return "#94a3b8";
+  if (score >= 75) return SCORE_HEX.strong;
+  if (score >= 60) return SCORE_HEX.worth_validating;
+  if (score >= 40) return SCORE_HEX.needs_more_research;
+  return SCORE_HEX.low_priority;
 }
 
 function CustomTooltip({ active, payload }) {

@@ -1,47 +1,18 @@
-function decisionFor(score) {
-  if (score >= 75)
-    return {
-      label: "Strong opportunity",
-      color: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
-      dot: "bg-emerald-500",
-    };
-  if (score >= 60)
-    return {
-      label: "Worth validating",
-      color: "bg-yellow-50 text-yellow-800 ring-1 ring-yellow-200",
-      dot: "bg-yellow-500",
-    };
-  if (score >= 40)
-    return {
-      label: "Needs research",
-      color: "bg-orange-50 text-orange-800 ring-1 ring-orange-200",
-      dot: "bg-orange-500",
-    };
-  return {
-    label: "Low priority",
-    color: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-    dot: "bg-slate-400",
-  };
-}
+import { decisionForScore } from "../lib/decisionStyles";
 
 function ScoreBar({ score }) {
+  const d = decisionForScore(score);
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
-      <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden">
-        <div
-          className="h-full"
-          style={{
-            width: `${score}%`,
-            background:
-              score >= 75
-                ? "#16a34a"
-                : score >= 60
-                ? "#eab308"
-                : score >= 40
-                ? "#f97316"
-                : "#94a3b8",
-          }}
-        />
+      <div
+        className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={score}
+        aria-label={`Opportunity score ${score} out of 100, ${d.label}`}
+      >
+        <div className={`h-full ${d.dot}`} style={{ width: `${score}%` }} />
       </div>
       <span className="text-sm font-medium tabular-nums text-ink">{score}</span>
     </div>
@@ -89,12 +60,21 @@ export default function OpportunitiesTable({
           </thead>
           <tbody>
             {opportunities.map((o, i) => {
-              const d = decisionFor(o.opportunity_score);
+              const d = decisionForScore(o.opportunity_score);
               return (
                 <tr
                   key={i}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Open score breakdown for ${o.opportunity}`}
                   onClick={() => onSelectOpportunity?.(o)}
-                  className="border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectOpportunity?.(o);
+                    }
+                  }}
+                  className="border-t border-slate-100 hover:bg-slate-100/70 focus-visible:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 cursor-pointer transition-colors"
                 >
                   <td className="px-4 py-2.5 text-ink-muted tabular-nums">{i + 1}</td>
                   <td className="px-4 py-2.5 font-medium text-ink max-w-[280px]">
@@ -120,8 +100,8 @@ export default function OpportunitiesTable({
                     <ScoreBar score={o.opportunity_score} />
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="flex flex-col items-start gap-1">
-                      <span className={`chip-decision ${d.color}`}>
+                    <div className="flex flex-col items-start gap-2">
+                      <span className={`chip-decision ${d.chip}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
                         {d.label}
                       </span>
@@ -131,10 +111,11 @@ export default function OpportunitiesTable({
                           target="_blank"
                           rel="noreferrer noopener"
                           onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
                           data-tour-id={i === 0 ? "brief-link-top" : undefined}
-                          className="text-[11px] text-ink-soft hover:text-ink underline-offset-2 hover:underline"
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-ink hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 transition"
                         >
-                          Brief →
+                          Open one-pager →
                         </a>
                       )}
                     </div>

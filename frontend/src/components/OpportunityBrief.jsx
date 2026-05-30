@@ -4,20 +4,7 @@ import { getOpportunityBrief } from "../lib/api";
 import { briefToMarkdown } from "../lib/markdown";
 import { loadCurrentData } from "../lib/sessionStore";
 import { computeBriefLocally } from "../lib/brief";
-
-const BUCKET_STYLES = {
-  strong: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200",
-  worth_validating: "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200",
-  needs_more_research: "bg-orange-100 text-orange-800 ring-1 ring-orange-200",
-  low_priority: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-};
-
-const BAR_COLORS = {
-  severity: "bg-rose-400",
-  willingness_to_pay: "bg-blue-400",
-  competition_intensity: "bg-violet-400",
-  evidence_count: "bg-amber-400",
-};
+import { decisionByKey, COMPONENT_BAR_COLORS } from "../lib/decisionStyles";
 
 function ComponentBar({ component, totalScore }) {
   const widthPct = totalScore > 0 ? (component.contribution / totalScore) * 100 : 0;
@@ -34,7 +21,7 @@ function ComponentBar({ component, totalScore }) {
       </div>
       <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
         <div
-          className={`h-full ${BAR_COLORS[component.name] || "bg-slate-400"}`}
+          className={`h-full ${COMPONENT_BAR_COLORS[component.name] || "bg-slate-400"}`}
           style={{ width: `${Math.max(0, Math.min(100, widthPct))}%` }}
         />
       </div>
@@ -218,7 +205,8 @@ export default function OpportunityBrief() {
                   <span className="text-base text-ink-muted ml-1">/100</span>
                 </div>
               </div>
-              <span className={`chip ${BUCKET_STYLES[sb.bucket_key] || ""}`}>
+              <span className={`chip-decision ${decisionByKey(sb.bucket_key).chip}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${decisionByKey(sb.bucket_key).dot}`} />
                 {sb.bucket_label}
               </span>
             </div>

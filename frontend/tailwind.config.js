@@ -4,19 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Body text + secondary text tokens.
+        // ink.muted darkened from #64748b (~4.57:1 on white) to #475569 (~7.0:1)
+        // so 12px / 11px text passes WCAG 1.4.3 even on tinted card backgrounds.
         ink: {
           DEFAULT: "#0f172a",
           soft: "#334155",
-          muted: "#64748b",
+          muted: "#475569",
         },
-        node: {
-          segment: "#3b82f6",
-          pain: "#ef4444",
-          competitor: "#a855f7",
-          feature: "#10b981",
-          pricing: "#f59e0b",
-          opportunity: "#eab308",
-        },
+        // Note: runtime node-type colors live in src/lib/nodeStyles.js
+        // (NODE_COLORS), keyed by the actual node type strings
+        // ("pain_point", "pricing_tier", ...). Don't duplicate here.
       },
       fontFamily: {
         sans: [
