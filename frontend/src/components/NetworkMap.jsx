@@ -126,6 +126,11 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
         className={`relative h-[520px] bg-slate-50/40 ${
           hoverId ? "cursor-pointer" : "cursor-default"
         }`}
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgb(203 213 225 / 0.4) 1px, transparent 1px)",
+          backgroundSize: "18px 18px",
+        }}
         role="img"
         aria-label={`Force-directed network of ${nodes.length} nodes across ${NODE_TYPES.length} types. The ranked opportunities table below carries the same scored insights for keyboard or screen-reader use.`}
       >

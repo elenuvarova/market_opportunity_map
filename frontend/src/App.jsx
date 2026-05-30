@@ -124,8 +124,19 @@ export default function App() {
       <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur sticky top-0 z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 grid place-items-center text-white font-semibold flex-shrink-0">
-              M
+            <div
+              className="h-9 w-9 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 grid place-items-center flex-shrink-0"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <line x1="6" y1="7" x2="14" y2="13" stroke="#94a3b8" strokeWidth="1.5" />
+                <line x1="14" y1="13" x2="18" y2="6" stroke="#94a3b8" strokeWidth="1.5" />
+                <line x1="14" y1="13" x2="10" y2="18" stroke="#94a3b8" strokeWidth="1.5" />
+                <circle cx="6" cy="7" r="2.4" fill="#3b82f6" />
+                <circle cx="18" cy="6" r="2.4" fill="#a855f7" />
+                <circle cx="14" cy="13" r="2.6" fill="#eab308" />
+                <circle cx="10" cy="18" r="2.2" fill="#ef4444" />
+              </svg>
             </div>
             <div className="min-w-0">
               <h1 className="text-base font-semibold tracking-tight text-ink leading-tight">

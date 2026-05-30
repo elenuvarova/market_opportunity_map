@@ -85,8 +85,10 @@ export default function CompetitorFeatureHeatmap({ data }) {
                       <div
                         className="h-6 w-10 rounded-md border border-slate-200"
                         style={{
+                          // competitor-purple (#a855f7) matches the network-map
+                          // competitor node color — darker = more crowded.
                           background: present
-                            ? `rgba(15, 23, 42, ${opacity})`
+                            ? `rgba(168, 85, 247, ${opacity})`
                             : "transparent",
                         }}
                         title={`${c} → ${f}`}
