@@ -11,6 +11,17 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media print {
   body {
     background: white !important;
@@ -54,7 +65,7 @@
     @apply btn text-ink-soft hover:bg-slate-100 focus-visible:ring-slate-300;
   }
   .chip {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap;
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1;
   }
   .chip-decision {
     @apply inline-flex items-center gap-1.5 rounded-full pl-2 pr-2.5 py-1 text-xs font-medium whitespace-nowrap;

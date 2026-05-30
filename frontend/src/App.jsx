@@ -115,6 +115,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-ink focus:px-3 focus:py-1.5 focus:text-sm focus:text-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+      >
+        Skip to content
+      </a>
       <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur sticky top-0 z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { assembleFromPaste } from "../lib/api";
+import { setupFocusTrap } from "../lib/focusTrap";
 
 const TABS = [
   {
@@ -35,15 +36,21 @@ export default function PasteModal({ open, onClose, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const firstTextarea = useRef(null);
+  const dialogRef = useRef(null);
+  const titleId = "paste-modal-title";
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    setTimeout(() => firstTextarea.current?.focus(), 60);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open || !dialogRef.current) return;
+    return setupFocusTrap(dialogRef.current, "textarea");
+  }, [open]);
 
   const hasInput =
     values.competitors_text.trim() ||
@@ -81,14 +88,16 @@ export default function PasteModal({ open, onClose, onSubmit }) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-2xl bg-white rounded-2xl shadow-cardLg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
-        aria-label="Paste your own scenario"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
         <header className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-ink">Paste your own scenario</h2>
+            <h2 id={titleId} className="text-base font-semibold text-ink">Paste your own scenario</h2>
             <p className="text-xs text-ink-muted mt-0.5">
               Rough text in, playable graph out. For higher-fidelity analysis,
               upload a CSV instead.
@@ -98,19 +107,28 @@ export default function PasteModal({ open, onClose, onSubmit }) {
             type="button"
             onClick={onClose}
             className="btn-ghost px-2 py-1 text-xs"
-            aria-label="Close"
+            aria-label="Close paste modal"
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </button>
         </header>
 
-        <div className="px-5 pt-3 border-b border-slate-100 flex items-center gap-1">
+        <div
+          role="tablist"
+          aria-label="Paste input categories"
+          className="px-5 pt-3 border-b border-slate-100 flex items-center gap-1"
+        >
           {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
+              role="tab"
+              id={`paste-tab-${t.key}`}
+              aria-selected={t.key === activeTab}
+              aria-controls={`paste-panel-${t.key}`}
+              tabIndex={t.key === activeTab ? 0 : -1}
               onClick={() => setActiveTab(t.key)}
-              className={`px-3 py-2 text-sm rounded-t-lg border-b-2 transition ${
+              className={`px-3 py-2 text-sm rounded-t-lg border-b-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 ${
                 t.key === activeTab
                   ? "border-ink text-ink font-medium"
                   : "border-transparent text-ink-muted hover:text-ink-soft"
@@ -118,7 +136,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
             >
               {t.label}
               {values[t.field].trim() && (
-                <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
               )}
             </button>
           ))}
@@ -131,9 +149,18 @@ export default function PasteModal({ open, onClose, onSubmit }) {
           </button>
         </div>
 
-        <div className="p-5">
+        <div
+          className="p-5"
+          role="tabpanel"
+          id={`paste-panel-${current.key}`}
+          aria-labelledby={`paste-tab-${current.key}`}
+        >
+          <label htmlFor={`paste-textarea-${current.key}`} className="sr-only">
+            {current.label} input
+          </label>
           <textarea
             ref={firstTextarea}
+            id={`paste-textarea-${current.key}`}
             value={values[current.field]}
             onChange={(e) =>
               setValues({ ...values, [current.field]: e.target.value })
@@ -141,14 +168,17 @@ export default function PasteModal({ open, onClose, onSubmit }) {
             placeholder={current.placeholder}
             rows={12}
             maxLength={100_000}
-            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm font-mono leading-snug focus:border-slate-400 focus:outline-none resize-none"
+            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm font-mono leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:border-slate-400 resize-none"
             spellCheck={false}
           />
           <div className="mt-1 text-[10px] text-ink-muted text-right tabular-nums">
             {values[current.field].length.toLocaleString()} / 100,000 chars
           </div>
           {error && (
-            <p className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">
+            <p
+              role="alert"
+              className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2"
+            >
               {error}
             </p>
           )}

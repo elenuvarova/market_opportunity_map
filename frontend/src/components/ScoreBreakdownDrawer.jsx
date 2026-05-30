@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getOpportunityBreakdown } from "../lib/api";
 import { computeBreakdown } from "../lib/scoring";
 import { decisionByKey, COMPONENT_BAR_COLORS } from "../lib/decisionStyles";
+import { setupFocusTrap } from "../lib/focusTrap";
 
 function useBreakdown(opportunity, datasetKey) {
   const [data, setData] = useState(null);
@@ -58,7 +59,14 @@ function ComponentBar({ component, totalScore }) {
           <span className="font-medium text-ink">+{component.contribution}</span>
         </span>
       </div>
-      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div
+        className="h-2 rounded-full bg-slate-100 overflow-hidden"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={totalScore || 100}
+        aria-valuenow={component.contribution}
+        aria-label={`${component.label} contributes ${component.contribution} to the score`}
+      >
         <div
           className={`h-full ${COMPONENT_BAR_COLORS[component.name] || "bg-slate-400"}`}
           style={{ width: `${Math.max(0, Math.min(100, widthPct))}%` }}
@@ -118,6 +126,8 @@ export default function ScoreBreakdownDrawer({
   onClose,
 }) {
   const { data, error, loading } = useBreakdown(opportunity, datasetKey);
+  const asideRef = useRef(null);
+  const titleId = "score-breakdown-title";
 
   useEffect(() => {
     if (!opportunity) return;
@@ -128,24 +138,31 @@ export default function ScoreBreakdownDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [opportunity, onClose]);
 
+  useEffect(() => {
+    if (!opportunity || !asideRef.current) return;
+    return setupFocusTrap(asideRef.current, '[aria-label="Close drawer"]');
+  }, [opportunity]);
+
   const open = !!opportunity;
 
   return (
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity z-30 ${
+        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity z-30 ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!open}
       />
       <aside
+        ref={asideRef}
         data-tour-id="drawer"
         className={`fixed top-0 right-0 h-full w-full max-w-[480px] bg-white border-l border-slate-200 shadow-cardLg z-40 transform transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
-        aria-label="Opportunity score breakdown"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
         {opportunity && (
           <div className="h-full flex flex-col">
@@ -154,7 +171,7 @@ export default function ScoreBreakdownDrawer({
                 <div className="text-xs text-ink-muted uppercase tracking-wide">
                   {opportunity.segment} · {opportunity.competitor}
                 </div>
-                <h2 className="mt-1 text-base font-semibold text-ink leading-snug">
+                <h2 id={titleId} className="mt-1 text-base font-semibold text-ink leading-snug">
                   {opportunity.opportunity}
                 </h2>
                 <p className="mt-1 text-xs text-ink-muted leading-snug">
@@ -167,7 +184,7 @@ export default function ScoreBreakdownDrawer({
                 className="btn-ghost px-2 py-1 text-xs flex-shrink-0"
                 aria-label="Close drawer"
               >
-                ✕
+                <span aria-hidden="true">✕</span>
               </button>
             </header>
 

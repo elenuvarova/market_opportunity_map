@@ -82,11 +82,19 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search nodes…"
-          className="w-48 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
+          aria-label="Search nodes by label"
+          className="w-48 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:border-slate-400"
         />
       </div>
 
-      <div className="flex flex-wrap gap-2 px-5 py-3 border-b border-slate-200/70 bg-slate-50/60">
+      <div
+        className="flex flex-wrap items-center gap-2 px-5 py-3 border-b border-slate-200/70 bg-slate-50/60"
+        role="group"
+        aria-label="Filter network nodes by type"
+      >
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted mr-1">
+          Show:
+        </span>
         {NODE_TYPES.map((t) => {
           const active = activeTypes.has(t);
           return (
@@ -94,11 +102,13 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
               type="button"
               key={t}
               onClick={() => toggleType(t)}
+              aria-pressed={active}
+              aria-label={`${active ? "Hide" : "Show"} ${NODE_LABELS[t]} nodes`}
               className={clsx(
                 "chip transition cursor-pointer",
                 active
                   ? NODE_CHIP_CLASSES[t]
-                  : "bg-white text-slate-400 ring-1 ring-slate-200"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 line-through opacity-70"
               )}
             >
               <span
@@ -111,7 +121,14 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
         })}
       </div>
 
-      <div ref={containerRef} className="relative h-[520px] bg-slate-50/40">
+      <div
+        ref={containerRef}
+        className={`relative h-[520px] bg-slate-50/40 ${
+          hoverId ? "cursor-pointer" : "cursor-default"
+        }`}
+        role="img"
+        aria-label={`Force-directed network of ${nodes.length} nodes across ${NODE_TYPES.length} types. The ranked opportunities table below carries the same scored insights for keyboard or screen-reader use.`}
+      >
         {width > 0 && (
           <ForceGraph2D
             ref={fgRef}
