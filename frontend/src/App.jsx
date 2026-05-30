@@ -241,21 +241,8 @@ export default function App() {
           <>
             <SummaryCards summary={data.summary} />
 
-            {/* Decision-ready artifact first — what a PM came here for. */}
-            <OpportunitiesTable
-              opportunities={data.opportunities}
-              onSelectOpportunity={setSelectedOpportunity}
-              datasetKey={activeDemoKey}
-              briefSource={dataSource === "demo" ? "demo" : "session"}
-            />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <OpportunityMatrix matrix={data.matrix} />
-              <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
-            </div>
-
-            {/* Exploratory map last — hidden on mobile in favor of the
-                ranked table and matrix above. */}
+            {/* Visuals first — the network map is the most "portfolio-y"
+                view and pulls a cold viewer in. */}
             <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <NetworkMap
@@ -313,10 +300,23 @@ export default function App() {
 
             {/* Mobile-only hint that the graph lives on desktop. */}
             <div className="md:hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-ink-soft">
-              The interactive network map is desktop-only. The ranked
-              opportunities, matrix and heatmap above carry the same
+              The interactive network map is desktop-only. The matrix,
+              heatmap and ranked opportunities below carry the same
               insights for mobile reviewers.
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <OpportunityMatrix matrix={data.matrix} />
+              <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
+            </div>
+
+            {/* Decision-ready table last — what a PM walks away with. */}
+            <OpportunitiesTable
+              opportunities={data.opportunities}
+              onSelectOpportunity={setSelectedOpportunity}
+              datasetKey={activeDemoKey}
+              briefSource={dataSource === "demo" ? "demo" : "session"}
+            />
           </>
         )}
       </main>

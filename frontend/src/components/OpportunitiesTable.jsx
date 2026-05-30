@@ -3,9 +3,9 @@ import { decisionForScore } from "../lib/decisionStyles";
 function ScoreBar({ score }) {
   const d = decisionForScore(score);
   return (
-    <div className="flex items-center gap-2 min-w-[120px]">
+    <div className="flex items-center gap-2">
       <div
-        className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden"
+        className="h-1.5 flex-1 min-w-[40px] max-w-[80px] rounded-full bg-slate-100 overflow-hidden"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
@@ -42,20 +42,20 @@ export default function OpportunitiesTable({
           Click any row to see the score breakdown and supporting signals.
         </p>
       </div>
-      <div className="overflow-auto">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto md:overflow-x-visible">
+        <table className="w-full text-sm md:table-fixed">
           <thead>
             <tr className="bg-slate-50 text-ink-muted text-xs uppercase tracking-wide">
-              <th className="text-left font-medium px-4 py-2 w-10">#</th>
-              <th className="text-left font-medium px-4 py-2">Opportunity</th>
-              <th className="text-left font-medium px-4 py-2">Segment</th>
-              <th className="text-left font-medium px-4 py-2">Pain point</th>
-              <th className="text-right font-medium px-4 py-2">Sev.</th>
-              <th className="text-right font-medium px-4 py-2">WTP</th>
-              <th className="text-right font-medium px-4 py-2">Comp.</th>
-              <th className="text-right font-medium px-4 py-2">Ev.</th>
-              <th className="text-left font-medium px-4 py-2">Score</th>
-              <th className="text-left font-medium px-4 py-2 min-w-[160px]">Decision</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[3%]">#</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[22%]">Opportunity</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[12%]">Segment</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[24%]">Pain point</th>
+              <th className="text-right font-medium px-2 py-2 md:w-[4%]">Sev.</th>
+              <th className="text-right font-medium px-2 py-2 md:w-[4%]">WTP</th>
+              <th className="text-right font-medium px-2 py-2 md:w-[4%]">Comp.</th>
+              <th className="text-right font-medium px-2 py-2 md:w-[4%]">Ev.</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[10%]">Score</th>
+              <th className="text-left font-medium px-3 py-2 md:w-[13%]">Decision</th>
             </tr>
           </thead>
           <tbody>
@@ -76,30 +76,24 @@ export default function OpportunitiesTable({
                   }}
                   className="border-t border-slate-100 hover:bg-slate-100/70 focus-visible:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400 cursor-pointer transition-colors"
                 >
-                  <td className="px-4 py-2.5 text-ink-muted tabular-nums">{i + 1}</td>
-                  <td className="px-4 py-2.5 font-medium text-ink max-w-[280px]">
-                    <span className="block truncate" title={o.opportunity}>
-                      {o.opportunity}
-                    </span>
+                  <td className="px-3 py-3 text-ink-muted tabular-nums align-top">{i + 1}</td>
+                  <td className="px-3 py-3 font-medium text-ink align-top break-words">
+                    {o.opportunity}
                   </td>
-                  <td className="px-4 py-2.5 text-ink-soft max-w-[160px]">
-                    <span className="block truncate" title={o.segment}>
-                      {o.segment}
-                    </span>
+                  <td className="px-3 py-3 text-ink-soft align-top break-words">
+                    {o.segment}
                   </td>
-                  <td className="px-4 py-2.5 text-ink-soft max-w-[280px]">
-                    <span className="block truncate" title={o.pain_point}>
-                      {o.pain_point}
-                    </span>
+                  <td className="px-3 py-3 text-ink-soft align-top break-words">
+                    {o.pain_point}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{o.severity}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{o.willingness_to_pay}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{o.competition_intensity}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{o.evidence_count}</td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-2 py-3 text-right tabular-nums align-top">{o.severity}</td>
+                  <td className="px-2 py-3 text-right tabular-nums align-top">{o.willingness_to_pay}</td>
+                  <td className="px-2 py-3 text-right tabular-nums align-top">{o.competition_intensity}</td>
+                  <td className="px-2 py-3 text-right tabular-nums align-top">{o.evidence_count}</td>
+                  <td className="px-3 py-3 align-top">
                     <ScoreBar score={o.opportunity_score} />
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-3 align-top">
                     <div className="flex flex-col items-start gap-2">
                       <span className={`chip-decision ${d.chip}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
