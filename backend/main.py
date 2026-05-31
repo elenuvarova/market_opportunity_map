@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 from typing import Iterable
 
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from fastapi.responses import JSONResponse
 
 from analysis import (
     ValidationError,
@@ -21,11 +23,16 @@ from analysis import (
     validate_dataframe,
 )
 from demo_data import DEMO_DATASETS, get_dataset
-from parse import assemble
+from parse import assemble, parse_competitors
 
 
 MAX_CSV_BYTES = 2 * 1024 * 1024  # 2 MB
 MAX_PASTE_BLOB = 100 * 1024  # 100 KB per text blob
+# Combined ceiling for the /assemble JSON body: three capped blobs plus a
+# margin for the JSON envelope and field names.
+MAX_ASSEMBLE_BYTES = MAX_PASTE_BLOB * 3 + 16 * 1024
+
+logger = logging.getLogger("mom")
 
 
 class AssembleRequest(BaseModel):
@@ -35,11 +42,46 @@ class AssembleRequest(BaseModel):
 
 app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
 
+def client_ip_key(request: Request) -> str:
+    """Rate-limit key that survives Render's reverse proxy. Without this every
+    request arrives with the proxy's IP and the per-IP limit collapses into one
+    shared global bucket — one busy client would 429 everyone. The first
+    X-Forwarded-For entry is the originating client."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    return get_remote_address(request)
+
+
 # Per-IP rate limit. /analyze and /assemble accept user-supplied payloads
 # and run the full pipeline, so cap how often a single client can hit them.
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=client_ip_key)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+@app.middleware("http")
+async def reject_oversized_bodies(request: Request, call_next):
+    """Reject too-large uploads by Content-Length BEFORE the body is buffered
+    into memory/temp files. The per-handler size checks remain as
+    defense-in-depth for chunked uploads that omit Content-Length."""
+    if request.method == "POST" and request.url.path in ("/analyze", "/assemble"):
+        raw_len = request.headers.get("content-length")
+        if raw_len is not None:
+            try:
+                size = int(raw_len)
+            except ValueError:
+                size = None
+            if size is not None:
+                cap = MAX_CSV_BYTES if request.url.path == "/analyze" else MAX_ASSEMBLE_BYTES
+                if size > cap:
+                    return JSONResponse(
+                        status_code=413,
+                        content={"detail": f"Request body too large (max {cap // 1024} KB)."},
+                    )
+    return await call_next(request)
 
 
 def _allowed_origins() -> Iterable[str]:
@@ -159,10 +201,15 @@ def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
         payload.quotes_text,
     )
     if not rows:
-        raise HTTPException(
-            status_code=422,
-            detail="Couldn't extract any usable signals — paste at least one pain or one quote.",
-        )
+        had_competitors = bool(parse_competitors(payload.competitors_text))
+        if had_competitors:
+            detail = (
+                "Competitors alone can't be scored — add at least one pain point "
+                "or interview quote so there's an opportunity to evaluate."
+            )
+        else:
+            detail = "Couldn't extract any usable signals — paste at least one pain or one quote."
+        raise HTTPException(status_code=422, detail=detail)
     df = pd.DataFrame(rows)
     try:
         return analyze_market_data(df)
@@ -183,7 +230,11 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
     try:
         raw = await file.read()
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not read upload: {exc}") from exc
+        logger.warning("Upload read failed: %s", exc)
+        raise HTTPException(
+            status_code=400,
+            detail="Could not read the uploaded file. Please try again.",
+        ) from exc
     if len(raw) > MAX_CSV_BYTES:
         raise HTTPException(
             status_code=413,
@@ -192,7 +243,11 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
     try:
         df = pd.read_csv(io.BytesIO(raw))
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Could not parse CSV: {exc}") from exc
+        logger.warning("CSV parse failed: %s", exc)
+        raise HTTPException(
+            status_code=400,
+            detail="Could not parse the file as CSV. Make sure it's a valid, comma-separated file with the required columns.",
+        ) from exc
 
     try:
         return analyze_market_data(df)

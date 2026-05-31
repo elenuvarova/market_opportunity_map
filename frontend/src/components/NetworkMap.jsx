@@ -50,14 +50,25 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
     };
   }, [nodes, edges, activeTypes, query]);
 
+  // A stable signature of the visible node IDs (not just their count) so the
+  // layout re-fits when a filter swaps to a different same-size node set, plus
+  // `hasWidth` so the initial fit fires once the canvas actually has a size —
+  // on first render width is 0, the graph (and thus fgRef) isn't mounted yet,
+  // and a count-only dependency never re-runs to apply the forces or fit.
+  const nodeSig = useMemo(
+    () => filtered.nodes.map((n) => n.id).join("|"),
+    [filtered.nodes]
+  );
+  const hasWidth = width > 0;
+
   useEffect(() => {
     const fg = fgRef.current;
-    if (!fg) return;
+    if (!fg || !hasWidth) return;
     fg.d3Force("charge")?.strength(-180);
     fg.d3Force("link")?.distance(60);
     const t = setTimeout(() => fg.zoomToFit?.(400, 60), 200);
     return () => clearTimeout(t);
-  }, [filtered.nodes.length]);
+  }, [nodeSig, hasWidth]);
 
   const toggleType = (t) => {
     setActiveTypes((prev) => {

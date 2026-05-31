@@ -122,7 +122,7 @@ function buildSteps(script, data, onSelectNode, onSelectOpportunity) {
       popover: {
         title: "6 / 7 — Generate a brief",
         description:
-          "Click <b>Brief →</b> to open a print-friendly one-pager — the artifact a PM takes to a strategy meeting. It includes score breakdown, top signals, competitive landscape, open questions, and a recommended next step.",
+          "Click <b>Open one-pager →</b> to open a print-friendly brief — the artifact a PM takes to a strategy meeting. It includes score breakdown, top signals, competitive landscape, open questions, and a recommended next step.",
         side: "left",
       },
     },

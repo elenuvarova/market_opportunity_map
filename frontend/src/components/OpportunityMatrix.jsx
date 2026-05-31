@@ -60,7 +60,7 @@ export default function OpportunityMatrix({ matrix }) {
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
           <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-emerald-600" /> ≥75
+            <span className="h-2 w-2 rounded-full bg-emerald-500" /> ≥75
           </span>
           <span className="inline-flex items-center gap-1 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-yellow-500" /> 60–74

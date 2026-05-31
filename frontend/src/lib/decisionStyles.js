@@ -17,7 +17,7 @@ export const DECISION_BUCKETS = {
     accent: "border-yellow-400",
   },
   needs_more_research: {
-    label: "Needs research",
+    label: "Needs more research",
     chip: "bg-orange-50 text-orange-800 ring-1 ring-orange-200",
     dot: "bg-orange-500",
     accent: "border-orange-400",
