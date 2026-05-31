@@ -94,8 +94,8 @@ export default function OpportunitiesTable({
                     <ScoreBar score={o.opportunity_score} />
                   </td>
                   <td className="px-3 py-3 align-middle">
-                    <div className="flex flex-col items-start gap-2">
-                      <span className={`chip-decision ${d.chip}`}>
+                    <div className="flex flex-col items-stretch gap-2">
+                      <span className={`chip-decision ${d.chip} justify-center`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
                         {d.label}
                       </span>
@@ -107,7 +107,7 @@ export default function OpportunitiesTable({
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                           data-tour-id={i === 0 ? "brief-link-top" : undefined}
-                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-ink hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 transition"
+                          className="flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-ink hover:bg-slate-50 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 transition"
                         >
                           Open one-pager →
                         </a>
