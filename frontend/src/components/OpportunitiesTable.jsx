@@ -93,7 +93,7 @@ export default function OpportunitiesTable({
                   <td className="px-3 py-3 align-top">
                     <ScoreBar score={o.opportunity_score} />
                   </td>
-                  <td className="px-3 py-3 align-top">
+                  <td className="px-3 py-3 align-middle">
                     <div className="flex flex-col items-start gap-2">
                       <span className={`chip-decision ${d.chip}`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${d.dot}`} />
