@@ -1,16 +1,18 @@
 import io
 import logging
 import os
+from pathlib import Path
 from typing import Iterable
 
 import pandas as pd
-from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from analysis import (
     ValidationError,
@@ -42,6 +44,12 @@ class AssembleRequest(BaseModel):
 
 app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
 
+# All API endpoints live on a router so it can be mounted twice: at the root
+# (preserves the original Render two-service behaviour and exposes /health for
+# the Docker HEALTHCHECK) and under /api (what the single-origin frontend calls
+# in production, since there is no Vite dev proxy to strip the prefix there).
+router = APIRouter()
+
 def client_ip_key(request: Request) -> str:
     """Rate-limit key that survives Render's reverse proxy. Without this every
     request arrives with the proxy's IP and the per-IP limit collapses into one
@@ -67,7 +75,10 @@ async def reject_oversized_bodies(request: Request, call_next):
     """Reject too-large uploads by Content-Length BEFORE the body is buffered
     into memory/temp files. The per-handler size checks remain as
     defense-in-depth for chunked uploads that omit Content-Length."""
-    if request.method == "POST" and request.url.path in ("/analyze", "/assemble"):
+    # Match both the root-mounted paths and the /api-prefixed paths so the
+    # guard fires regardless of which mount the request came in on.
+    path = request.url.path
+    if request.method == "POST" and path in ("/analyze", "/assemble", "/api/analyze", "/api/assemble"):
         raw_len = request.headers.get("content-length")
         if raw_len is not None:
             try:
@@ -75,7 +86,7 @@ async def reject_oversized_bodies(request: Request, call_next):
             except ValueError:
                 size = None
             if size is not None:
-                cap = MAX_CSV_BYTES if request.url.path == "/analyze" else MAX_ASSEMBLE_BYTES
+                cap = MAX_CSV_BYTES if path.endswith("/analyze") else MAX_ASSEMBLE_BYTES
                 if size > cap:
                     return JSONResponse(
                         status_code=413,
@@ -104,12 +115,12 @@ app.add_middleware(
 )
 
 
-@app.get("/health")
+@router.get("/health")
 def health() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/datasets")
+@router.get("/datasets")
 def datasets() -> dict:
     return {
         "datasets": [
@@ -119,7 +130,7 @@ def datasets() -> dict:
     }
 
 
-@app.get("/demo")
+@router.get("/demo")
 def demo(dataset: str | None = Query(default=None)) -> dict:
     ds = get_dataset(dataset)
     if ds is None:
@@ -133,7 +144,7 @@ def demo(dataset: str | None = Query(default=None)) -> dict:
     return result
 
 
-@app.get("/opportunities/{opportunity_id}/breakdown")
+@router.get("/opportunities/{opportunity_id}/breakdown")
 def opportunity_breakdown(
     opportunity_id: str,
     dataset: str | None = Query(default=None),
@@ -157,7 +168,7 @@ def opportunity_breakdown(
     return build_breakdown(row)
 
 
-@app.get("/opportunities/{opportunity_id}/brief")
+@router.get("/opportunities/{opportunity_id}/brief")
 def opportunity_brief(
     opportunity_id: str,
     dataset: str | None = Query(default=None),
@@ -181,7 +192,7 @@ def opportunity_brief(
     return build_brief(row, df)
 
 
-@app.post("/assemble")
+@router.post("/assemble")
 @limiter.limit("15/minute")
 def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
     for label, blob in (
@@ -217,7 +228,7 @@ def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@app.post("/analyze")
+@router.post("/analyze")
 @limiter.limit("15/minute")
 async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
     if not file.filename.lower().endswith(".csv"):
@@ -253,3 +264,45 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
         return analyze_market_data(df)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+# Register API routes BEFORE any SPA catch-all so /api/* and the root health/API
+# paths are always resolved by the router, never swallowed by the fallback.
+#   - "/api/*"  : what the single-origin frontend calls in production.
+#   - root "/*" : preserves the original behaviour (e.g. /health for the Docker
+#                 HEALTHCHECK, and the legacy Render two-service URLs).
+app.include_router(router, prefix="/api")
+app.include_router(router)
+
+
+# --- Production: serve the built frontend from the same origin ---------------
+# Only wired up when a built SPA is present (it is COPYied into the image at
+# /app/static during the Docker build). Locally there is no such directory, so
+# this block is skipped entirely and `npm run dev` + the Vite proxy keep working
+# exactly as before.
+_STATIC_DIR = Path(os.environ.get("STATIC_DIR", Path(__file__).resolve().parent / "static"))
+_INDEX_FILE = _STATIC_DIR / "index.html"
+
+if _INDEX_FILE.is_file():
+    # Hashed JS/CSS and other built assets.
+    app.mount(
+        "/assets",
+        StaticFiles(directory=_STATIC_DIR / "assets"),
+        name="assets",
+    )
+
+    @app.get("/{full_path:path}")
+    def spa_fallback(full_path: str):
+        """Serve real files when they exist (favicon, etc.); otherwise return
+        index.html so client-side routes like /opportunity/:id/brief survive a
+        hard refresh. /api/* and the root API routes are already registered
+        above, so they are matched before this catch-all ever runs."""
+        candidate = (_STATIC_DIR / full_path).resolve()
+        # Guard against path traversal: only serve files inside _STATIC_DIR.
+        if (
+            full_path
+            and candidate.is_file()
+            and _STATIC_DIR.resolve() in candidate.parents
+        ):
+            return FileResponse(candidate)
+        return FileResponse(_INDEX_FILE)

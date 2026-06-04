@@ -1,0 +1,43 @@
+# Secrets must never enter the image — they are injected as Coolify env vars.
+**/.env
+**/.env.*
+!**/.env.example
+
+# VCS / CI / editor / OS cruft
+.git
+.gitignore
+.github
+.claude
+.idea
+.vscode
+**/.DS_Store
+
+# Node — reinstalled in the build stage via `npm ci`
+**/node_modules
+# stray macOS duplicate dirs (not used by the build)
+**/node_modules?*
+**/src?*
+
+# Prebuilt frontend output — rebuilt fresh inside the image
+frontend/dist
+
+# Python virtualenvs / caches / bytecode — never copy host venv into the image
+**/venv
+**/.venv
+**/env
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+
+# Tests + docs are not needed at runtime
+backend/test_*.py
+docs
+*.md
+sample_market_data.csv
+
+# Logs
+**/*.log
