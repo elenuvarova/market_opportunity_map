@@ -9,6 +9,21 @@ from __future__ import annotations
 import re
 from collections import Counter
 
+# Hard caps on assemble()'s cross-join. assemble() pairs every distinct pain
+# with every competitor, so the row count grows as pains * competitors. A small
+# (<100KB) paste of many short lines can therefore explode into millions of
+# rows — an algorithmic-complexity DoS. Cap each side, and cap the product,
+# BEFORE building the cross-join. Exceeding any cap raises AssembleError, which
+# the /assemble endpoint turns into an HTTP 422.
+MAX_COMPETITORS = 200
+MAX_PAINS = 500
+MAX_CROSS_JOIN_ROWS = 5000
+
+
+class AssembleError(Exception):
+    """Raised when pasted input would produce an unreasonably large dataset."""
+
+
 SEVERITY_KEYWORDS = {
     "broken": 3,
     "blocker": 3,
@@ -146,6 +161,13 @@ def assemble(competitors_text: str, pains_text: str, quotes_text: str) -> list[d
     pains_b = parse_pains(pains_text)
     pains_c = parse_quotes(quotes_text)
 
+    # Cap each side of the cross-join before doing any further work.
+    if len(competitors) > MAX_COMPETITORS:
+        raise AssembleError(
+            f"Too many competitors ({len(competitors)}; max {MAX_COMPETITORS}). "
+            "Trim the list or upload a CSV instead."
+        )
+
     all_pains: list[dict] = list(pains_b)
     for q in pains_c:
         all_pains.append(
@@ -161,6 +183,12 @@ def assemble(competitors_text: str, pains_text: str, quotes_text: str) -> list[d
     if not all_pains:
         return []
 
+    if len(all_pains) > MAX_PAINS:
+        raise AssembleError(
+            f"Too many pain points ({len(all_pains)}; max {MAX_PAINS}). "
+            "Trim the input or upload a CSV instead."
+        )
+
     # Competition intensity scales with number of competitors mentioned
     competition_intensity = min(10, max(3, len(competitors) + 2))
 
@@ -169,6 +197,16 @@ def assemble(competitors_text: str, pains_text: str, quotes_text: str) -> list[d
         competitors = [
             {"competitor": "(no competitor named)", "feature": "(unspecified)", "pricing_tier": "Paid"}
         ]
+
+    # Final guard on the cross-join size (pains * competitors), evaluated with
+    # the synthesized competitor included, before any rows are built.
+    cross_join_rows = len(all_pains) * len(competitors)
+    if cross_join_rows > MAX_CROSS_JOIN_ROWS:
+        raise AssembleError(
+            f"This input would generate {cross_join_rows} rows "
+            f"({len(all_pains)} pains x {len(competitors)} competitors; "
+            f"max {MAX_CROSS_JOIN_ROWS}). Trim the input or upload a CSV instead."
+        )
 
     pain_counts = Counter(p["pain"] for p in all_pains)
 

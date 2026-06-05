@@ -125,12 +125,29 @@ def test_assemble_oversized_body_rejected_early():
 # Proxy-aware rate-limit key
 # --------------------------------------------------------------------------- #
 
-def test_client_ip_key_prefers_first_forwarded_for():
+def test_client_ip_key_uses_rightmost_forwarded_for():
+    # Single trusted proxy appends the real client IP as the LAST hop. The
+    # leftmost entry is client-controlled (spoofable); we take the rightmost.
     req = SimpleNamespace(
-        headers={"x-forwarded-for": "203.0.113.7, 10.0.0.5"},
-        client=SimpleNamespace(host="10.0.0.5"),
+        headers={"x-forwarded-for": "10.0.0.5, 203.0.113.7"},
+        client=SimpleNamespace(host="172.16.0.1"),
     )
     assert client_ip_key(req) == "203.0.113.7"
+
+
+def test_client_ip_key_ignores_spoofed_leftmost_entry():
+    # An attacker who sets X-Forwarded-For can't pick their own bucket: the
+    # trusted proxy appends the observed client IP last, so that wins.
+    spoofed = SimpleNamespace(
+        headers={"x-forwarded-for": "1.1.1.1, 203.0.113.7"},
+        client=SimpleNamespace(host="172.16.0.1"),
+    )
+    legit = SimpleNamespace(
+        headers={"x-forwarded-for": "203.0.113.7"},
+        client=SimpleNamespace(host="172.16.0.1"),
+    )
+    # Both resolve to the same (proxy-observed) client IP -> same bucket.
+    assert client_ip_key(spoofed) == client_ip_key(legit) == "203.0.113.7"
 
 
 def test_client_ip_key_falls_back_to_remote_addr():
@@ -140,12 +157,12 @@ def test_client_ip_key_falls_back_to_remote_addr():
 
 def test_client_ip_key_distinguishes_two_users_behind_proxy():
     a = SimpleNamespace(
-        headers={"x-forwarded-for": "203.0.113.7, 10.0.0.5"},
-        client=SimpleNamespace(host="10.0.0.5"),
+        headers={"x-forwarded-for": "10.0.0.5, 203.0.113.7"},
+        client=SimpleNamespace(host="172.16.0.1"),
     )
     b = SimpleNamespace(
-        headers={"x-forwarded-for": "198.51.100.99, 10.0.0.5"},
-        client=SimpleNamespace(host="10.0.0.5"),
+        headers={"x-forwarded-for": "10.0.0.5, 198.51.100.99"},
+        client=SimpleNamespace(host="172.16.0.1"),
     )
-    # Same proxy peer, different real clients -> different buckets.
+    # Same proxy peer, different real clients (rightmost) -> different buckets.
     assert client_ip_key(a) != client_ip_key(b)

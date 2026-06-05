@@ -1,4 +1,9 @@
 fastapi==0.115.0
+# Pin FastAPI's core deps (previously floating transitively) to the resolved
+# versions for reproducible builds.
+starlette==0.38.6
+pydantic==2.13.4
+pydantic-core==2.46.4
 uvicorn[standard]==0.30.6
 pandas==2.2.2
 networkx==3.3

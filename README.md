@@ -2,8 +2,8 @@
 
 A product-strategy visualization tool that turns market research into an interactive map of customer segments, pain points, competitors, features, pricing tiers, and ranked product opportunities — with every score traceable back to the public signal that produced it.
 
-**Live demo:** <https://market-opportunity-map-web.onrender.com>
-**Guided tour (shareable URL):** <https://market-opportunity-map-web.onrender.com/?tour=1>
+**Live demo:** <https://marketmap.ontwrpn.com>
+**Guided tour (shareable URL):** <https://marketmap.ontwrpn.com/?tour=1>
 
 It helps product leaders answer one question they actually live with: *"Where is the market opportunity worth validating or investing in?"* — by surfacing underserved segments, crowded competitor clusters, and the gaps in between.
 
@@ -21,7 +21,7 @@ Two built-in demo datasets (product tools, EdTech) are grounded in public signal
 
 - **Frontend:** React 18, Vite, Tailwind CSS, `react-force-graph-2d`, Recharts, `react-router-dom`, `driver.js`
 - **Backend:** Python 3.11, FastAPI, pandas, networkx
-- **Deploy:** Render free tier — backend as a Python web service, frontend as a static site
+- **Deploy:** Single Docker container — uvicorn serves the built SPA and the `/api` on one origin (Coolify)
 
 ## Project structure
 
@@ -62,8 +62,7 @@ Two built-in demo datasets (product tools, EdTech) are grounded in public signal
 │   └── .env.example
 ├── docs/
 │   └── architecture-notes.md  # Phase 0 audit / code map
-├── sample_market_data.csv
-├── render.yaml
+├── Dockerfile                 # multi-stage build: SPA -> uvicorn serves /api + SPA
 └── README.md
 ```
 
@@ -93,7 +92,7 @@ One row per `(segment, pain_point, competitor, feature, pricing_tier, opportunit
 | `competition_intensity` | 1–10 |
 | `evidence_count` | number of research signals / mentions / interviews |
 
-See [`sample_market_data.csv`](sample_market_data.csv) for an example. The UI also shows the schema inline on the empty state.
+See [`frontend/public/sample_market_data.csv`](frontend/public/sample_market_data.csv) for an example. The UI also shows the schema inline on the empty state.
 
 ## Why scores are explainable
 
@@ -169,7 +168,7 @@ Example markdown excerpt for "Strategy cascade tool" (top opportunity in the pro
 
 A 90-second walkthrough through one real opportunity end-to-end — segment → pain → competitor → opportunity → score breakdown → brief. Click **Take a tour** in the header when the Product demo is loaded, or open the shareable URL directly:
 
-<https://market-opportunity-map-web.onrender.com/?tour=1>
+<https://marketmap.ontwrpn.com/?tour=1>
 
 The tour is scripted to the product dataset and pulls all its numbers (severity 8, score 65, etc.) from the loaded data so the copy stays in sync if scores ever shift. Implementation is [`driver.js`](https://driverjs.com) (~13KB gz) for DOM highlighting plus the existing canvas-drawn node ring for graph nodes — driver.js never needs to reach inside the canvas.
 
@@ -238,28 +237,30 @@ Errors:
 
 See [`docs/architecture-notes.md`](docs/architecture-notes.md) for the Phase 0 audit (scoring function location, sources data shape, endpoint inventory, component roles, what's *not* in the repo). It's the read-only code map written before the upgrade work and still useful as an orientation doc.
 
-## Deploy to Render
+## Deploy (single Docker container)
 
-This repo includes a [`render.yaml`](render.yaml) Blueprint. In Render: **New → Blueprint → Connect repo**. It provisions two free services:
+The whole app ships as **one image** built from the multi-stage [`Dockerfile`](Dockerfile). There is no separate static-site service and no cross-origin wiring:
 
-- **`market-opportunity-map-api`** — Python web service. Root dir `backend/`, builds with `pip install -r requirements.txt`, starts with `uvicorn main:app --host 0.0.0.0 --port $PORT`.
-- **`market-opportunity-map-web`** — Static site. Root dir `frontend/`, builds with `npm install && npm run build`, publishes `dist/`.
+- **Stage 1** builds the Vite SPA (`npm ci && npm run build`). `VITE_API_URL` is intentionally left unset so the bundle uses the same-origin `/api` base.
+- **Stage 2** installs the Python deps and runs `uvicorn main:app`. uvicorn serves the built SPA *and* the `/api` routes on the same port (8000), so the frontend and backend share one origin — no CORS needed for the app itself.
 
-### Wiring frontend ↔ backend
+Operational details baked into the image:
 
-Both env vars are baked into [`render.yaml`](render.yaml) with the default `*.onrender.com` hostnames for these two services, so Blueprint sync wires them up automatically:
+- **Health probe.** `GET /health` is registered at the root; the container `HEALTHCHECK` hits it with a Python one-liner (no curl/wget in `python:3.12-slim`).
+- **Non-root.** The runtime stage drops to an unprivileged `appuser` (uid 10001).
+- **Trusted proxy.** Started with `--forwarded-allow-ips '*'` so it honors `X-Forwarded-*` from the single reverse proxy in front of it; the per-IP rate-limit key reads the rightmost (closest-trusted-hop) `X-Forwarded-For` entry.
 
-- `VITE_API_URL` on the static site → the API service URL (Vite bakes this into the bundle at build time, so the static site rebuilds on change).
-- `FRONTEND_ORIGIN` on the API service → the static site URL (added to the API's CORS allowlist).
+### Deploying on Coolify
 
-If you forked the repo and your services got different hostnames, edit the two `value:` lines in `render.yaml` to match and push — Render re-syncs the Blueprint and redeploys both services.
+1. Push to GitHub.
+2. In Coolify: **New Resource → Docker / Dockerfile**, connect the repo.
+3. Point the subdomain (`marketmap.ontwrpn.com`) at the app and redeploy.
 
-If you ever see `Got HTML instead of JSON` in the UI, that means the static site bundle doesn't have `VITE_API_URL` baked in — trigger **Manual Deploy → Clear build cache & deploy** on the static site.
+Optional env var:
 
-Notes:
-- Free Render services sleep after inactivity, so the first request after idle takes ~30s.
-- The frontend bundles `react-force-graph-2d`, D3, Recharts, react-router-dom and driver.js (~240 KB gzipped) — fine for free tier, but visible on cold loads.
-- Render's free Postgres instances expire after 30 days. This app doesn't use a database, so that doesn't apply here — just noting it for future extensions.
+- `FRONTEND_ORIGIN` — only needed if a *different* origin must call the API cross-origin (added to the CORS allowlist). For the default single-origin deploy it can be left unset.
+
+The image is self-contained, so the same `docker build` runs identically locally and in production.
 
 ## Screenshots
 

@@ -25,10 +25,14 @@ from analysis import (
     validate_dataframe,
 )
 from demo_data import DEMO_DATASETS, get_dataset
-from parse import assemble, parse_competitors
+from parse import AssembleError, assemble, parse_competitors
 
 
 MAX_CSV_BYTES = 2 * 1024 * 1024  # 2 MB
+# Cap the parsed row count too: the byte limit alone doesn't bound work, since
+# the analysis pipeline (graph build, centrality) is super-linear in rows and a
+# small file can still hold many short rows. Reject oversized CSVs with a 422.
+MAX_CSV_ROWS = 5000
 MAX_PASTE_BLOB = 100 * 1024  # 100 KB per text blob
 # Combined ceiling for the /assemble JSON body: three capped blobs plus a
 # margin for the JSON envelope and field names.
@@ -51,15 +55,21 @@ app = FastAPI(title="Market Opportunity Map API", version="0.2.0")
 router = APIRouter()
 
 def client_ip_key(request: Request) -> str:
-    """Rate-limit key that survives Render's reverse proxy. Without this every
-    request arrives with the proxy's IP and the per-IP limit collapses into one
-    shared global bucket — one busy client would 429 everyone. The first
-    X-Forwarded-For entry is the originating client."""
+    """Rate-limit key that survives the reverse proxy. Without this every request
+    arrives with the proxy's IP and the per-IP limit collapses into one shared
+    global bucket — one busy client would 429 everyone.
+
+    Deployment has exactly ONE trusted reverse proxy (Traefik/Coolify) in front
+    of the app, and it APPENDS the real client IP as the last hop of
+    X-Forwarded-For. The LEFTMOST entries are fully client-controlled and so are
+    spoofable, especially with `--forwarded-allow-ips '*'`. We therefore use the
+    RIGHTMOST (closest-trusted-hop) entry — the IP Traefik itself observed — and
+    fall back to the socket peer if the header is absent or malformed."""
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            return parts[-1]
     return get_remote_address(request)
 
 
@@ -206,11 +216,14 @@ def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
                 detail=f"{label} is too large (max {MAX_PASTE_BLOB // 1024} KB).",
             )
 
-    rows = assemble(
-        payload.competitors_text,
-        payload.pains_text,
-        payload.quotes_text,
-    )
+    try:
+        rows = assemble(
+            payload.competitors_text,
+            payload.pains_text,
+            payload.quotes_text,
+        )
+    except AssembleError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     if not rows:
         had_competitors = bool(parse_competitors(payload.competitors_text))
         if had_competitors:
@@ -231,7 +244,7 @@ def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
 @router.post("/analyze")
 @limiter.limit("15/minute")
 async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
-    if not file.filename.lower().endswith(".csv"):
+    if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="File must be a .csv")
     if file.size is not None and file.size > MAX_CSV_BYTES:
         raise HTTPException(
@@ -259,6 +272,12 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
             status_code=400,
             detail="Could not parse the file as CSV. Make sure it's a valid, comma-separated file with the required columns.",
         ) from exc
+
+    if len(df) > MAX_CSV_ROWS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"CSV has too many rows ({len(df)}; max {MAX_CSV_ROWS}).",
+        )
 
     try:
         return analyze_market_data(df)

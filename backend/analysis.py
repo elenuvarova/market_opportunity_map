@@ -53,21 +53,24 @@ def validate_dataframe(df: pd.DataFrame) -> None:
 
 def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    # Use .loc[:, col] for every column write so these stay single-step
+    # assignments under pandas Copy-on-Write (the default in pandas 3.0);
+    # plain df[col] = ... on a post-dropna frame raises ChainedAssignmentError.
     for col in STRING_COLUMNS:
-        df[col] = df[col].astype(str).str.strip()
-        df[col] = df[col].replace({"": None, "nan": None, "None": None})
+        df.loc[:, col] = df[col].astype(str).str.strip()
+        df.loc[:, col] = df[col].replace({"": None, "nan": None, "None": None})
     for col in NUMERIC_COLUMNS:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+        df.loc[:, col] = pd.to_numeric(df[col], errors="coerce")
 
-    df = df.dropna(subset=STRING_COLUMNS + NUMERIC_COLUMNS)
+    df = df.dropna(subset=STRING_COLUMNS + NUMERIC_COLUMNS).copy()
     for col in ["severity", "willingness_to_pay", "competition_intensity"]:
-        df[col] = df[col].clip(lower=1, upper=10)
-    df["evidence_count"] = df["evidence_count"].clip(lower=0)
+        df.loc[:, col] = df[col].clip(lower=1, upper=10)
+    df.loc[:, "evidence_count"] = df["evidence_count"].clip(lower=0)
 
     if "sources" not in df.columns:
         df["sources"] = [[] for _ in range(len(df))]
     else:
-        df["sources"] = df["sources"].apply(lambda v: v if isinstance(v, list) else [])
+        df.loc[:, "sources"] = df["sources"].apply(lambda v: v if isinstance(v, list) else [])
 
     df = df.reset_index(drop=True)
     return df
@@ -95,7 +98,7 @@ def calculate_opportunity_scores(df: pd.DataFrame) -> pd.DataFrame:
         + (10 - df["competition_intensity"]) * SCORE_WEIGHTS["competition_intensity"]
         + evidence_capped * SCORE_WEIGHTS["evidence_count"]
     )
-    df["opportunity_score"] = (raw * 10).round().astype(int).clip(lower=0, upper=100)
+    df.loc[:, "opportunity_score"] = (raw * 10).round().astype(int).clip(lower=0, upper=100)
     return df
 
 
@@ -398,8 +401,8 @@ def calculate_summary(df: pd.DataFrame) -> dict:
         avg_competition=("competition_intensity", "mean"),
         avg_score=("opportunity_score", "mean"),
     )
-    segment_scores["underserved_score"] = (
-        segment_scores["avg_severity"] - segment_scores["avg_competition"]
+    segment_scores = segment_scores.assign(
+        underserved_score=segment_scores["avg_severity"] - segment_scores["avg_competition"]
     )
     most_underserved_segment = (
         segment_scores.sort_values("underserved_score", ascending=False).index[0]
