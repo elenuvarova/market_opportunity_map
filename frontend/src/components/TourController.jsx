@@ -63,6 +63,7 @@ function buildSteps(script, data, onSelectNode, onSelectOpportunity) {
   if (!seg || !pain || !competitor || !opp || !oppRow) return null;
 
   const painRow = data.opportunities.find((o) => o.pain_point === script.painLabel);
+  if (!painRow) return null;
 
   return [
     {
