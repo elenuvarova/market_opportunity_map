@@ -30,8 +30,10 @@ export default function CompetitorFeatureHeatmap({ data }) {
   }, [features, competitors, has]);
 
   return (
-    <div className="card p-5">
-      <div className="flex items-start justify-between gap-3 mb-4">
+    // min-w-0 lets the grid/flex track shrink below the table's intrinsic width
+    // so the inner overflow-auto actually scrolls instead of widening the page.
+    <div className="card p-5 min-w-0">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-ink">
             Competitor × feature coverage
@@ -40,18 +42,36 @@ export default function CompetitorFeatureHeatmap({ data }) {
             Filled cells = competitor has the feature. Darker columns = crowded areas.
           </p>
         </div>
+        {/* Inline legend so the opacity ramp reads without hovering. */}
+        <div className="flex items-center gap-2 text-2xs text-ink-muted" aria-hidden="true">
+          <span>Fewer</span>
+          <span className="flex items-center gap-0.5">
+            {[0.35, 0.55, 0.75, 1].map((o) => (
+              <span
+                key={o}
+                className="h-3 w-4 rounded-sm border border-slate-200"
+                style={{ background: `rgba(168, 85, 247, ${o})` }}
+              />
+            ))}
+          </span>
+          <span>More competitors</span>
+        </div>
       </div>
 
       <div className="overflow-auto">
         <table className="text-xs border-separate border-spacing-0">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white text-left font-medium text-ink-muted px-2 pb-2 align-bottom">
+              <th
+                scope="col"
+                className="sticky left-0 z-10 bg-white text-left font-medium text-ink-muted px-2 pb-2 align-bottom"
+              >
                 Competitor
               </th>
               {features.map((f) => (
                 <th
                   key={f}
+                  scope="col"
                   className="px-0 pb-2 align-bottom"
                   title={f}
                 >
@@ -71,26 +91,39 @@ export default function CompetitorFeatureHeatmap({ data }) {
           <tbody>
             {competitors.map((c) => (
               <tr key={c} className="hover:bg-slate-50">
-                <td className="sticky left-0 bg-white px-2 py-1.5 font-medium text-ink whitespace-nowrap">
+                <th
+                  scope="row"
+                  className="sticky left-0 bg-white px-2 py-1.5 text-left font-medium text-ink whitespace-nowrap"
+                >
                   {c}
-                </td>
+                </th>
                 {features.map((f) => {
                   const present = has.has(`${c}|||${f}`);
                   const crowd = featureCounts.get(f) || 0;
                   const opacity = present
                     ? Math.min(1, 0.35 + crowd / Math.max(1, competitors.length))
                     : 0;
+                  const label = present
+                    ? `${c} covers ${f} (${crowd} competitor${crowd === 1 ? "" : "s"} cover this feature)`
+                    : `${c} does not cover ${f}`;
                   return (
                     <td key={f} className="p-1">
+                      {/* aria-label carries the AT-readable description (the cell
+                          otherwise conveys data via color only). role="img" so
+                          screen readers announce the label, not an empty box. */}
                       <div
-                        className="h-6 w-10 rounded-md border border-slate-200"
-                        style={{
-                          // competitor-purple (#a855f7) matches the network-map
-                          // competitor node color — darker = more crowded.
-                          background: present
-                            ? `rgba(168, 85, 247, ${opacity})`
-                            : "transparent",
-                        }}
+                        role="img"
+                        aria-label={label}
+                        className={`h-6 w-10 rounded-md border border-slate-200 ${
+                          present ? "" : "bg-slate-50"
+                        }`}
+                        style={
+                          present
+                            ? // competitor-purple (#a855f7) matches the network-map
+                              // competitor node color — darker = more crowded.
+                              { background: `rgba(168, 85, 247, ${opacity})` }
+                            : undefined
+                        }
                         title={`${c} → ${f}`}
                       />
                     </td>

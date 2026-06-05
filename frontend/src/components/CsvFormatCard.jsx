@@ -13,7 +13,7 @@ const COLUMNS = [
 
 export default function CsvFormatCard() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+    <div className="surface bg-slate-50/60">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-ink">CSV format</h3>
@@ -35,7 +35,7 @@ export default function CsvFormatCard() {
           <code
             key={c.name}
             title={c.desc}
-            className="font-mono text-[11px] bg-white border border-slate-200 rounded px-2 py-1 text-ink truncate"
+            className="font-mono text-2xs bg-white border border-slate-200 rounded px-2 py-1 text-ink truncate"
           >
             {c.name}
           </code>
@@ -62,7 +62,7 @@ function FragmentRow({ col }) {
     <>
       <dt className="font-mono text-ink whitespace-nowrap">
         {col.name}
-        <span className="ml-1.5 text-[10px] text-ink-muted">({col.type})</span>
+        <span className="ml-1.5 text-2xs text-ink-muted">({col.type})</span>
       </dt>
       <dd className="text-ink-muted">{col.desc}</dd>
     </>

@@ -18,34 +18,35 @@ export default function EmptyState({ onTryDemo, onPickFile, onOpenPaste, loading
 
       <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
         {DEMO_DATASETS.map((d) => (
-          <div
+          <button
             key={d.key}
-            className="rounded-xl border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-card transition"
+            type="button"
+            disabled={loading}
+            onClick={() => onTryDemo(d.key)}
+            className="surface text-left hover:border-slate-300 hover:shadow-card transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => onTryDemo(d.key)}
-              className="block text-left w-full disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded-md"
-            >
-              <div className="flex items-center gap-2">
-                <span className="chip bg-slate-100 text-slate-700">Demo</span>
-                <span className="font-medium text-ink">{d.label}</span>
-              </div>
-              <p className="mt-1.5 text-sm text-ink-muted">{d.description}</p>
-              <span className="mt-3 inline-block text-xs font-medium text-ink-soft">
-                {loading ? "Loading…" : "Load this demo →"}
-              </span>
-            </button>
-            <a
-              href={`/?tour=${d.key}`}
-              className="mt-3 block text-xs font-medium text-ink hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded"
-            >
-              Or take the 90-second tour →
-            </a>
-          </div>
+            <div className="flex items-center gap-2">
+              <span className="chip chip-neutral">Demo</span>
+              <span className="font-medium text-ink">{d.label}</span>
+            </div>
+            <p className="mt-1.5 text-sm text-ink-muted">{d.description}</p>
+            <span className="mt-3 inline-block text-xs font-medium text-ink-soft">
+              {loading ? "Loading…" : "Load this demo →"}
+            </span>
+          </button>
         ))}
       </div>
+
+      {/* One shared tour entry below the grid (was duplicated per-card). */}
+      <p className="mt-4 text-center text-xs text-ink-muted">
+        New here?{" "}
+        <a
+          href={`/?tour=${DEMO_DATASETS[0]?.key}`}
+          className="font-medium text-ink hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 rounded"
+        >
+          Take the 90-second tour →
+        </a>
+      </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         <button

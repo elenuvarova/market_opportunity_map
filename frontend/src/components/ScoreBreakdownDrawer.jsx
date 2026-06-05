@@ -3,6 +3,7 @@ import { getOpportunityBreakdown } from "../lib/api";
 import { computeBreakdown } from "../lib/scoring";
 import { decisionByKey, COMPONENT_BAR_COLORS } from "../lib/decisionStyles";
 import { setupFocusTrap } from "../lib/focusTrap";
+import { useOverlayLock } from "../lib/useOverlayLock";
 
 function useBreakdown(opportunity, datasetKey) {
   const [data, setData] = useState(null);
@@ -72,7 +73,7 @@ function ComponentBar({ component, totalScore }) {
           style={{ width: `${Math.max(0, Math.min(100, widthPct))}%` }}
         />
       </div>
-      <p className="mt-1 text-[11px] text-ink-muted leading-snug">{component.note}</p>
+      <p className="mt-1 text-2xs text-ink-muted leading-snug">{component.note}</p>
     </div>
   );
 }
@@ -80,9 +81,9 @@ function ComponentBar({ component, totalScore }) {
 function Signal({ signal }) {
   const isExternal = /^https?:\/\//i.test(signal.url || "");
   return (
-    <li className="rounded-lg border border-slate-200 bg-white p-3 hover:border-slate-300 transition">
+    <li className="surface p-3 hover:border-slate-300 transition">
       <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="chip bg-slate-100 text-slate-700">{signal.source_type}</span>
+        <span className="chip chip-neutral">{signal.source_type}</span>
         {isExternal ? (
           <a
             href={signal.url}
@@ -94,7 +95,7 @@ function Signal({ signal }) {
             open ↗
           </a>
         ) : (
-          <span className="text-[10px] text-ink-muted">local</span>
+          <span className="text-2xs text-ink-muted">local</span>
         )}
       </div>
       {signal.note && (
@@ -103,7 +104,7 @@ function Signal({ signal }) {
         </p>
       )}
       {signal.is_paraphrase && signal.note && (
-        <p className="mt-1 text-[10px] text-ink-muted">paraphrase</p>
+        <p className="mt-1 text-2xs text-ink-muted">paraphrase</p>
       )}
     </li>
   );
@@ -129,6 +130,9 @@ export default function ScoreBreakdownDrawer({
   const asideRef = useRef(null);
   const titleId = "score-breakdown-title";
 
+  // Lock body scroll + make the app shell inert while the drawer is open.
+  useOverlayLock(!!opportunity);
+
   useEffect(() => {
     if (!opportunity) return;
     const onKey = (e) => {
@@ -149,15 +153,24 @@ export default function ScoreBreakdownDrawer({
     <>
       <div
         onClick={onClose}
-        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity z-30 ${
+        className={`fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity z-overlay ${
           open ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!open}
       />
+      {/* Viewport-sized clip layer. Keeps the closed (off-screen, translate-x-full)
+          drawer from extending the page and letting the window scroll sideways
+          on mobile. pointer-events-none when closed so it never intercepts. */}
+      <div
+        className={`fixed inset-0 z-modal overflow-hidden ${
+          open ? "" : "pointer-events-none"
+        }`}
+        aria-hidden={!open}
+      >
       <aside
         ref={asideRef}
         data-tour-id="drawer"
-        className={`fixed top-0 right-0 h-full w-full max-w-[480px] bg-white border-l border-slate-200 shadow-cardLg z-40 transform transition-transform duration-200 ease-out ${
+        className={`absolute top-0 right-0 h-full w-full max-w-drawer bg-white border-l border-slate-200 shadow-cardLg transform transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
@@ -181,7 +194,7 @@ export default function ScoreBreakdownDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-ghost px-2 py-1 text-xs flex-shrink-0"
+                className="btn-ghost text-xs flex-shrink-0 min-h-[44px] min-w-[44px] p-0"
                 aria-label="Close drawer"
               >
                 <span aria-hidden="true">✕</span>
@@ -212,7 +225,7 @@ export default function ScoreBreakdownDrawer({
                         <ComponentBar key={c.name} component={c} totalScore={data.score} />
                       ))}
                     </div>
-                    <p className="mt-3 text-[11px] text-ink-muted leading-snug font-mono">
+                    <p className="mt-3 text-2xs text-ink-muted leading-snug font-mono">
                       {data.formula_note}
                     </p>
                   </section>
@@ -236,11 +249,7 @@ export default function ScoreBreakdownDrawer({
                     )}
                   </section>
 
-                  {error && (
-                    <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
-                      {error}
-                    </p>
-                  )}
+                  {error && <p className="notice-warn text-2xs">{error}</p>}
                 </>
               )}
             </div>
@@ -255,7 +264,7 @@ export default function ScoreBreakdownDrawer({
                 >
                   Generate brief →
                 </a>
-                <p className="mt-2 text-[11px] text-ink-muted text-center">
+                <p className="mt-2 text-2xs text-ink-muted text-center">
                   Opens a print-friendly one-pager in a new tab
                 </p>
               </footer>
@@ -263,6 +272,7 @@ export default function ScoreBreakdownDrawer({
           </div>
         )}
       </aside>
+      </div>
     </>
   );
 }

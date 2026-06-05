@@ -7,8 +7,10 @@ export const DECISION_BUCKETS = {
   strong: {
     label: "Strong opportunity",
     chip: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
-    dot: "bg-emerald-500",
-    accent: "border-emerald-400",
+    // dot is emerald-600 (DECISION_COLORS.strong) — darker than the feature-node
+    // green so a "strong opportunity" marker no longer reads as a "feature".
+    dot: "bg-emerald-600",
+    accent: "border-emerald-500",
   },
   worth_validating: {
     label: "Worth validating",

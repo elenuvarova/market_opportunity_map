@@ -76,6 +76,11 @@ export default function NodeDetailsPanel({ node, edges, nodes, onClose }) {
                 </span>
               </li>
             ))}
+            {outgoing.length > 6 && (
+              <li className="text-xs text-ink-muted">
+                +{outgoing.length - 6} more
+              </li>
+            )}
           </ul>
         </div>
       )}
@@ -99,6 +104,11 @@ export default function NodeDetailsPanel({ node, edges, nodes, onClose }) {
                 </span>
               </li>
             ))}
+            {incoming.length > 6 && (
+              <li className="text-xs text-ink-muted">
+                +{incoming.length - 6} more
+              </li>
+            )}
           </ul>
         </div>
       )}

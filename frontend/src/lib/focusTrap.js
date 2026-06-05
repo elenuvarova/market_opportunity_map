@@ -21,15 +21,6 @@ function getFocusableEls(root) {
   });
 }
 
-export function useFocusTrap(ref, isOpen, initialFocusSelector) {
-  // Returns a setup callback to be used inside a useEffect.
-  // Caller pattern:
-  //   useEffect(() => {
-  //     if (!open) return;
-  //     return setupFocusTrap(ref.current, initialFocusSelector);
-  //   }, [open]);
-}
-
 export function setupFocusTrap(container, initialFocusSelector) {
   if (!container) return () => {};
   const previouslyFocused = document.activeElement;
@@ -70,9 +61,32 @@ export function setupFocusTrap(container, initialFocusSelector) {
 
   return () => {
     container.removeEventListener("keydown", onKeyDown);
-    if (previouslyFocused && typeof previouslyFocused.focus === "function") {
-      // Restore focus to whatever opened this surface.
-      requestAnimationFrame(() => previouslyFocused.focus());
-    }
+    requestAnimationFrame(() => {
+      // Restore focus to whatever opened this surface — but only if it's still
+      // in the document. After a close the trigger may have unmounted (e.g. a
+      // table row that re-rendered); restoring to a detached node silently drops
+      // focus onto <body>, stranding screen-reader users. Fall back to a sensible
+      // anchor (the skip link, then <main>, then <body>) in that case.
+      if (
+        previouslyFocused &&
+        typeof previouslyFocused.focus === "function" &&
+        document.contains(previouslyFocused)
+      ) {
+        previouslyFocused.focus();
+        return;
+      }
+      const anchor =
+        document.querySelector('a[href="#main"]') ||
+        document.getElementById("main") ||
+        document.body;
+      if (anchor && typeof anchor.focus === "function") {
+        // <main> isn't focusable by default; make it programmatically focusable
+        // for this one restore so focus lands somewhere meaningful.
+        if (anchor.id === "main" && !anchor.hasAttribute("tabindex")) {
+          anchor.setAttribute("tabindex", "-1");
+        }
+        anchor.focus();
+      }
+    });
   };
 }

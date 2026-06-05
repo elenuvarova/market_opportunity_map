@@ -15,7 +15,26 @@ import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
 import DashboardSkeleton from "./components/DashboardSkeleton";
 import TourController, { isTourAvailable } from "./components/TourController";
 import PasteModal from "./components/PasteModal";
+import HeaderOverflowMenu from "./components/HeaderOverflowMenu";
 import { saveCurrentData, clearCurrentData } from "./lib/sessionStore";
+import { NODE_COLORS } from "./lib/tokens";
+
+// The tour anchors and copy are desktop-tuned; only offer it at md+ where the
+// graph it highlights is laid out as designed.
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return true;
+    return window.matchMedia("(min-width: 768px)").matches;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = () => setDesktop(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return desktop;
+}
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -30,6 +49,8 @@ export default function App() {
   const [dataSource, setDataSource] = useState(null); // "demo" | "csv" | "paste"
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInput = useRef(null);
+  const isDesktop = useIsDesktop();
+  const tourOffered = data && isTourAvailable(activeDemoKey) && !tourRunning && isDesktop;
 
   const runDemo = async (key) => {
     setLoading(true);
@@ -117,11 +138,12 @@ export default function App() {
     <div className="min-h-screen overflow-x-hidden">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-ink focus:px-3 focus:py-1.5 focus:text-sm focus:text-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-skip focus:rounded-md focus:bg-ink focus:px-3 focus:py-1.5 focus:text-sm focus:text-white focus:outline-none focus:ring-2 focus:ring-slate-400"
       >
         Skip to content
       </a>
-      <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur sticky top-0 z-20">
+      <div id="app-shell">
+      <header className="border-b border-slate-200/70 bg-white/80 backdrop-blur sticky top-0 z-sticky">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div
@@ -132,10 +154,10 @@ export default function App() {
                 <line x1="6" y1="7" x2="14" y2="13" stroke="#94a3b8" strokeWidth="1.5" />
                 <line x1="14" y1="13" x2="18" y2="6" stroke="#94a3b8" strokeWidth="1.5" />
                 <line x1="14" y1="13" x2="10" y2="18" stroke="#94a3b8" strokeWidth="1.5" />
-                <circle cx="6" cy="7" r="2.4" fill="#3b82f6" />
-                <circle cx="18" cy="6" r="2.4" fill="#a855f7" />
-                <circle cx="14" cy="13" r="2.6" fill="#eab308" />
-                <circle cx="10" cy="18" r="2.2" fill="#ef4444" />
+                <circle cx="6" cy="7" r="2.4" fill={NODE_COLORS.segment} />
+                <circle cx="18" cy="6" r="2.4" fill={NODE_COLORS.competitor} />
+                <circle cx="14" cy="13" r="2.6" fill={NODE_COLORS.opportunity} />
+                <circle cx="10" cy="18" r="2.2" fill={NODE_COLORS.pain} />
               </svg>
             </div>
             <div className="min-w-0">
@@ -149,20 +171,8 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
-            {data && (
-              <span className="text-xs text-ink-muted hidden sm:inline">
-                Source: <span className="font-medium text-ink">{sourceLabel}</span>
-              </span>
-            )}
             <FileUpload ref={fileInput} onFile={runUpload} disabled={loading} />
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={() => setPasteOpen(true)}
-              disabled={loading}
-            >
-              Paste
-            </button>
+            {/* Primary actions stay visible at every width. */}
             <button
               type="button"
               className="btn-secondary"
@@ -177,26 +187,47 @@ export default function App() {
               loading={loading}
               activeKey={activeDemoKey}
             />
-            {data && isTourAvailable(activeDemoKey) && !tourRunning && (
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setTourRunning(true)}
-                disabled={loading}
-              >
-                Take a tour
-              </button>
-            )}
-            {data && (
+
+            {/* Secondary actions: inline at lg+, collapsed into a "More" menu below. */}
+            <div className="hidden lg:flex items-center gap-2">
               <button
                 type="button"
                 className="btn-ghost"
-                onClick={reset}
+                onClick={() => setPasteOpen(true)}
                 disabled={loading}
               >
-                Reset
+                Paste
               </button>
-            )}
+              {tourOffered && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setTourRunning(true)}
+                  disabled={loading}
+                >
+                  Take a tour
+                </button>
+              )}
+              {data && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={reset}
+                  disabled={loading}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+
+            <div className="lg:hidden">
+              <HeaderOverflowMenu
+                disabled={loading}
+                onPaste={() => setPasteOpen(true)}
+                onTour={tourOffered ? () => setTourRunning(true) : null}
+                onReset={data ? reset : null}
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -218,7 +249,7 @@ export default function App() {
         {!data && loading && <DashboardSkeleton />}
 
         {data && dataSource === "paste" && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-start justify-between gap-3">
+          <div className="notice-warn flex items-start justify-between gap-3">
             <div>
               <p className="font-medium">Rough graph from pasted input</p>
               <p className="mt-0.5 text-amber-800/90 text-xs">
@@ -239,11 +270,22 @@ export default function App() {
 
         {data && (
           <>
+            {/* Slim provenance bar — moved out of the header to keep header
+                actions on one row. */}
+            <div className="flex items-center gap-2 text-xs text-ink-muted">
+              <span>Source:</span>
+              <span className="font-medium text-ink truncate">{sourceLabel}</span>
+            </div>
+
+            <h2 className="sr-only">Summary</h2>
             <SummaryCards summary={data.summary} />
 
             {/* Visuals first — the network map is the most "portfolio-y"
-                view and pulls a cold viewer in. */}
-            <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
+                view and pulls a cold viewer in. Single column up to lg, then
+                graph + details side-by-side (mirrors the matrix/heatmap pattern,
+                avoiding the awkward md tall stack). */}
+            <h2 className="sr-only">Network map and node details</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
                 <NetworkMap
                   nodes={data.nodes}
@@ -298,19 +340,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mobile-only hint that the graph lives on desktop. */}
-            <div className="md:hidden rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-ink-soft">
-              The interactive network map is desktop-only. The matrix,
-              heatmap and ranked opportunities below carry the same
-              insights for mobile reviewers.
-            </div>
-
+            <h2 className="sr-only">Opportunity matrix and competitor coverage</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <OpportunityMatrix matrix={data.matrix} />
               <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
             </div>
 
             {/* Decision-ready table last — what a PM walks away with. */}
+            <h2 className="sr-only">Ranked opportunities</h2>
             <OpportunitiesTable
               opportunities={data.opportunities}
               onSelectOpportunity={setSelectedOpportunity}
@@ -320,6 +357,15 @@ export default function App() {
           </>
         )}
       </main>
+
+      <footer className="mx-auto max-w-7xl px-6 pb-10 pt-2 text-xs text-ink-muted">
+        Market Opportunity Map · MVP build
+      </footer>
+      </div>
+      {/* Overlays live OUTSIDE #app-shell so the drawer/modal can mark the
+          shell inert + aria-hidden without hiding themselves. The tour is also
+          outside but intentionally does NOT lock the shell — it drives the
+          shell's own controls. */}
 
       <ScoreBreakdownDrawer
         opportunity={selectedOpportunity}
@@ -343,10 +389,6 @@ export default function App() {
         onClose={() => setPasteOpen(false)}
         onSubmit={handlePasteResult}
       />
-
-      <footer className="mx-auto max-w-7xl px-6 pb-10 pt-2 text-xs text-ink-muted">
-        Market Opportunity Map · MVP build
-      </footer>
     </div>
   );
 }

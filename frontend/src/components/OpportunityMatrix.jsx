@@ -9,22 +9,27 @@ import {
   ZAxis,
   ReferenceLine,
   Cell,
+  LabelList,
 } from "recharts";
+import { DECISION_COLORS } from "../lib/tokens";
 
-// Keep hexes in sync with COMPONENT_BAR_COLORS / dot classes in decisionStyles.js.
-// Recharts needs raw values, not Tailwind classnames.
-const SCORE_HEX = {
-  strong: "#10b981",        // emerald-500
-  worth_validating: "#eab308", // yellow-500
-  needs_more_research: "#f97316", // orange-500
-  low_priority: "#94a3b8",   // slate-400
-};
+// Legend rows reuse the named decision buckets used everywhere else (table chip,
+// drawer badge, brief) so the matrix reads in the same language. Color alone is
+// insufficient (WCAG 1.4.1) — every point also carries its score as a label.
+const LEGEND = [
+  { label: "Strong", range: "≥75", color: DECISION_COLORS.strong },
+  { label: "Worth validating", range: "60–74", color: DECISION_COLORS.validate },
+  { label: "Needs research", range: "40–59", color: DECISION_COLORS.research },
+  { label: "Low", range: "<40", color: DECISION_COLORS.low },
+];
 
+// Recharts needs raw hex, not Tailwind classnames. Colors come from the single
+// source of truth (lib/tokens.js). Thresholds mirror decisionStyles.decisionForScore.
 function scoreColor(score) {
-  if (score >= 75) return SCORE_HEX.strong;
-  if (score >= 60) return SCORE_HEX.worth_validating;
-  if (score >= 40) return SCORE_HEX.needs_more_research;
-  return SCORE_HEX.low_priority;
+  if (score >= 75) return DECISION_COLORS.strong;
+  if (score >= 60) return DECISION_COLORS.validate;
+  if (score >= 40) return DECISION_COLORS.research;
+  return DECISION_COLORS.low;
 }
 
 function CustomTooltip({ active, payload }) {
@@ -59,22 +64,36 @@ export default function OpportunityMatrix({ matrix }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-          <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" /> ≥75
-          </span>
-          <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-yellow-500" /> 60–74
-          </span>
-          <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-orange-500" /> 40–59
-          </span>
-          <span className="inline-flex items-center gap-1 whitespace-nowrap">
-            <span className="h-2 w-2 rounded-full bg-slate-400" /> &lt;40
-          </span>
+          {LEGEND.map((l) => (
+            <span key={l.label} className="inline-flex items-center gap-1 whitespace-nowrap">
+              <span className="h-2 w-2 rounded-full" style={{ background: l.color }} />
+              {l.label}
+              <span className="text-ink-muted/70">({l.range})</span>
+            </span>
+          ))}
         </div>
       </div>
 
-      <div className="h-[380px] w-full">
+      <div className="relative h-chart-sm w-full">
+        {/* Faint quadrant guidance — the top-left "best play" corner is the
+            actionable signal a PM is hunting for. aria-hidden: decorative. */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] text-2xs font-medium text-ink-muted/70"
+          aria-hidden="true"
+        >
+          <span className="absolute left-10 top-3 max-w-[45%]">
+            High pain · low competition = best play
+          </span>
+          <span className="absolute right-5 top-3 max-w-[40%] text-right">
+            High pain · crowded
+          </span>
+          <span className="absolute left-10 bottom-10 max-w-[40%]">
+            Low pain · open space
+          </span>
+          <span className="absolute right-5 bottom-10 max-w-[40%] text-right">
+            Low pain · crowded
+          </span>
+        </div>
         <ResponsiveContainer>
           <ScatterChart margin={{ top: 16, right: 24, bottom: 36, left: 24 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -122,6 +141,15 @@ export default function OpportunityMatrix({ matrix }) {
               {matrix.map((d, i) => (
                 <Cell key={i} fill={scoreColor(d.score)} />
               ))}
+              {/* Non-color channel: every point shows its score, so the
+                  decision bands are legible without relying on hue (WCAG 1.4.1). */}
+              <LabelList
+                dataKey="score"
+                position="top"
+                offset={6}
+                fontSize={10}
+                fill="#0f172a"
+              />
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>

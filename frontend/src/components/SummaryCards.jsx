@@ -1,21 +1,20 @@
-// Accent colors mirror the node-type palette used in NetworkMap so the
-// summary anchors the color system at first glance.
-const ACCENT = {
-  segment: "before:bg-blue-500",
-  competitor: "before:bg-purple-500",
-  opportunity: "before:bg-yellow-500",
-  pain: "before:bg-red-500",
-  feature: "before:bg-emerald-500",
-  pricing: "before:bg-amber-500",
-};
+import { NODE_COLORS } from "../lib/tokens";
 
+// Accent colors mirror the node-type palette used in NetworkMap so the summary
+// anchors the color system at first glance. Hex comes from the single source of
+// truth (lib/tokens.js); the bar is painted via a CSS var on the ::before
+// pseudo-element (bg-[color:var(...)]), so no raw palette literals live here.
 function Stat({ label, value, hint, accent }) {
   const isNumeric = typeof value === "number";
-  const accentClass = accent
-    ? `relative before:absolute before:left-0 before:top-0 before:h-full before:w-[3px] before:rounded-l-2xl ${ACCENT[accent] || ""}`
+  const accentColor = accent ? NODE_COLORS[accent] : null;
+  const accentClass = accentColor
+    ? "relative before:absolute before:left-0 before:top-0 before:h-full before:w-accent-bar before:rounded-l-2xl before:bg-[color:var(--accent)]"
     : "";
   return (
-    <div className={`card p-5 overflow-hidden ${accentClass}`}>
+    <div
+      className={`card p-5 overflow-hidden ${accentClass}`}
+      style={accentColor ? { "--accent": accentColor } : undefined}
+    >
       <div className="text-xs font-medium uppercase tracking-wide text-ink-muted">
         {label}
       </div>

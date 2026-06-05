@@ -32,9 +32,9 @@ function ComponentBar({ component, totalScore }) {
 function Signal({ signal }) {
   const isExternal = /^https?:\/\//i.test(signal.url || "");
   return (
-    <li className="rounded-lg border border-slate-200 bg-white p-4">
+    <li className="surface">
       <div className="flex items-start justify-between gap-3 mb-2">
-        <span className="chip bg-slate-100 text-slate-700">{signal.source_type}</span>
+        <span className="chip chip-neutral">{signal.source_type}</span>
         {isExternal ? (
           <a
             href={signal.url}
@@ -46,7 +46,7 @@ function Signal({ signal }) {
             {signal.url}
           </a>
         ) : (
-          <span className="text-[10px] text-ink-muted">local · not linkable</span>
+          <span className="text-2xs text-ink-muted">local · not linkable</span>
         )}
       </div>
       {signal.note && (
@@ -55,7 +55,7 @@ function Signal({ signal }) {
         </p>
       )}
       {signal.is_paraphrase && signal.note && (
-        <p className="mt-1 text-[10px] text-ink-muted">paraphrase</p>
+        <p className="mt-1 text-2xs text-ink-muted">paraphrase</p>
       )}
     </li>
   );
@@ -63,7 +63,7 @@ function Signal({ signal }) {
 
 function CompetitorCard({ entry }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="surface">
       <h4 className="text-sm font-semibold text-ink">{entry.competitor}</h4>
       <dl className="mt-2 text-xs space-y-1.5">
         <div>
@@ -215,7 +215,7 @@ export default function OpportunityBrief() {
                 <ComponentBar key={c.name} component={c} totalScore={sb.score} />
               ))}
             </div>
-            <p className="mt-4 text-[11px] text-ink-muted leading-snug font-mono">
+            <p className="mt-4 text-2xs text-ink-muted leading-snug font-mono">
               {sb.formula_note}
             </p>
           </section>

@@ -1,3 +1,5 @@
+import { NODE_COLORS as TOKEN_NODE_COLORS } from "./tokens.js";
+
 export const NODE_TYPES = [
   "segment",
   "pain_point",
@@ -16,13 +18,15 @@ export const NODE_LABELS = {
   opportunity: "Opportunity",
 };
 
+// Hex values come from the single source of truth (lib/tokens.js). This map only
+// re-keys them onto the raw node `type` strings the graph data uses.
 export const NODE_COLORS = {
-  segment: "#3b82f6",
-  pain_point: "#ef4444",
-  competitor: "#a855f7",
-  feature: "#10b981",
-  pricing_tier: "#f59e0b",
-  opportunity: "#eab308",
+  segment: TOKEN_NODE_COLORS.segment,
+  pain_point: TOKEN_NODE_COLORS.pain,
+  competitor: TOKEN_NODE_COLORS.competitor,
+  feature: TOKEN_NODE_COLORS.feature,
+  pricing_tier: TOKEN_NODE_COLORS.pricing,
+  opportunity: TOKEN_NODE_COLORS.opportunity,
 };
 
 export const NODE_CHIP_CLASSES = {

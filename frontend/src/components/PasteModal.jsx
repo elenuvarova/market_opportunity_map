@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { assembleFromPaste } from "../lib/api";
 import { setupFocusTrap } from "../lib/focusTrap";
+import { useOverlayLock } from "../lib/useOverlayLock";
 
 const TABS = [
   {
@@ -52,6 +53,9 @@ export default function PasteModal({ open, onClose, onSubmit }) {
     return setupFocusTrap(dialogRef.current, "textarea");
   }, [open]);
 
+  // Lock body scroll + make the app shell inert while the modal is open.
+  useOverlayLock(open);
+
   const hasInput =
     values.competitors_text.trim() ||
     values.pains_text.trim() ||
@@ -84,18 +88,18 @@ export default function PasteModal({ open, onClose, onSubmit }) {
 
   return (
     <div
-      className="fixed inset-0 z-40 grid place-items-center bg-slate-900/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-modal grid place-items-center bg-slate-900/40 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-2xl bg-white rounded-2xl shadow-cardLg overflow-hidden"
+        className="flex max-h-[90dvh] w-full max-w-2xl flex-col bg-white rounded-2xl shadow-cardLg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <header className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+        <header className="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3 flex-shrink-0">
           <div>
             <h2 id={titleId} className="text-base font-semibold text-ink">Paste your own scenario</h2>
             <p className="text-xs text-ink-muted mt-0.5">
@@ -106,7 +110,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
           <button
             type="button"
             onClick={onClose}
-            className="btn-ghost px-2 py-1 text-xs"
+            className="btn-ghost text-xs min-h-[44px] min-w-[44px] p-0"
             aria-label="Close paste modal"
           >
             <span aria-hidden="true">✕</span>
@@ -116,7 +120,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
         <div
           role="tablist"
           aria-label="Paste input categories"
-          className="px-5 pt-3 border-b border-slate-100 flex items-center gap-1"
+          className="px-5 pt-3 border-b border-slate-100 flex items-center gap-1 flex-shrink-0"
         >
           {TABS.map((t) => (
             <button
@@ -150,7 +154,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
         </div>
 
         <div
-          className="p-5"
+          className="p-5 flex-1 overflow-auto"
           role="tabpanel"
           id={`paste-panel-${current.key}`}
           aria-labelledby={`paste-tab-${current.key}`}
@@ -168,24 +172,21 @@ export default function PasteModal({ open, onClose, onSubmit }) {
             placeholder={current.placeholder}
             rows={12}
             maxLength={100_000}
-            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm font-mono leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:border-slate-400 resize-none"
+            className="input p-3 font-mono leading-snug resize-none"
             spellCheck={false}
           />
-          <div className="mt-1 text-[10px] text-ink-muted text-right tabular-nums">
+          <div className="mt-1 text-2xs text-ink-muted text-right tabular-nums">
             {values[current.field].length.toLocaleString()} / 100,000 chars
           </div>
           {error && (
-            <p
-              role="alert"
-              className="mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2"
-            >
+            <p role="alert" className="notice-danger mt-3 text-xs">
               {error}
             </p>
           )}
         </div>
 
-        <footer className="px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3">
-          <p className="text-[11px] text-ink-muted">
+        <footer className="px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3 flex-shrink-0">
+          <p className="text-2xs text-ink-muted">
             Data lives in this browser tab only. Reload or close = lose it.
           </p>
           <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import { usePrefersReducedMotion } from "../lib/usePrefersReducedMotion";
 
 // One scripted tour per demo dataset. Each script names the four canonical
 // nodes (segment / pain / competitor / opportunity) and provides the
@@ -146,6 +147,7 @@ export default function TourController({
   onClose,
 }) {
   const driverRef = useRef(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (!data) return;
@@ -154,11 +156,27 @@ export default function TourController({
       onClose();
       return;
     }
-    const steps = buildSteps(script, data, onSelectNode, onSelectOpportunity);
-    if (!steps) {
+    const allSteps = buildSteps(script, data, onSelectNode, onSelectOpportunity);
+    if (!allSteps) {
       onClose();
       return;
     }
+
+    // Drop any step whose anchor isn't in the DOM so driver.js never highlights
+    // a missing element. `body` and the drawer (mounted on demand by an earlier
+    // step's onHighlightStarted) are always kept.
+    const steps = allSteps.filter((s) => {
+      const sel = s.element;
+      if (!sel || sel === "body" || sel === '[data-tour-id="drawer"]') return true;
+      return !!document.querySelector(sel);
+    });
+    if (steps.length === 0) {
+      onClose();
+      return;
+    }
+
+    // Remember what had focus so we can restore it when the tour ends.
+    const previouslyFocused = document.activeElement;
 
     const obj = driver({
       showProgress: false,
@@ -167,12 +185,19 @@ export default function TourController({
       prevBtnText: "← Back",
       doneBtnText: "Finish",
       smoothScroll: true,
-      animate: true,
+      animate: !prefersReducedMotion,
       overlayOpacity: 0.5,
       steps,
       onDestroyed: () => {
         onSelectNode(null);
         onSelectOpportunity(null);
+        if (
+          previouslyFocused &&
+          typeof previouslyFocused.focus === "function" &&
+          document.contains(previouslyFocused)
+        ) {
+          previouslyFocused.focus();
+        }
         onClose();
       },
     });

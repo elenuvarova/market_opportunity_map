@@ -39,7 +39,7 @@ export default function DemoMenu({ onPick, disabled, loading, activeKey }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-cardLg p-1 z-30"
+          className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white shadow-cardLg p-1 z-dropdown"
         >
           {DEMO_DATASETS.map((d) => {
             const active = d.key === activeKey;

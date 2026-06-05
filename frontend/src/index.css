@@ -70,4 +70,30 @@
   .chip-decision {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap;
   }
+  /* Compact button — same shape as .btn, tighter padding/type. */
+  .btn-sm {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 whitespace-nowrap;
+  }
+  /* Text/search input — matches the NetworkMap search field. */
+  .input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:border-slate-400;
+  }
+  /* Inset card — lighter than .card, for nested panels. */
+  .surface {
+    @apply rounded-xl border border-slate-200 bg-white p-4;
+  }
+  /* Neutral chip variant (pairs with .chip). */
+  .chip-neutral {
+    @apply bg-slate-100 text-slate-700 ring-1 ring-slate-200;
+  }
+  /* Inline notices. .notice = neutral; -danger / -warn for status. */
+  .notice {
+    @apply rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink-soft;
+  }
+  .notice-danger {
+    @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800;
+  }
+  .notice-warn {
+    @apply rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900;
+  }
 }

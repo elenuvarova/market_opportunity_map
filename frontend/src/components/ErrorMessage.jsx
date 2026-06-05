@@ -3,7 +3,7 @@ export default function ErrorMessage({ message, onDismiss }) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 flex items-start justify-between gap-3"
+      className="notice-danger flex items-start justify-between gap-3"
     >
       <div>
         <p className="font-medium">Something went wrong</p>

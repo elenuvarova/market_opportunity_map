@@ -7,6 +7,11 @@ import {
   NODE_TYPES,
   NODE_CHIP_CLASSES,
 } from "../lib/nodeStyles";
+import { usePrefersReducedMotion } from "../lib/usePrefersReducedMotion";
+
+// How many of the largest nodes always show a label (regardless of zoom). Keeps
+// the graph legible on touch, where there's no hover and the default zoom is < 1.2.
+const ALWAYS_LABELED = 7;
 
 function useContainerSize(ref) {
   const [size, setSize] = useState({ width: 0, height: 480 });
@@ -32,6 +37,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
   const [activeTypes, setActiveTypes] = useState(() => new Set(NODE_TYPES));
   const [query, setQuery] = useState("");
   const [hoverId, setHoverId] = useState(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -49,6 +55,15 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
       links: visibleEdges.map((e) => ({ ...e })),
     };
   }, [nodes, edges, activeTypes, query]);
+
+  // The largest few visible nodes always carry a label so the map is readable
+  // on touch (no hover, default zoom < 1.2). Ties broken by id for stability.
+  const alwaysLabeledIds = useMemo(() => {
+    const ranked = [...filtered.nodes].sort(
+      (a, b) => (b.size || 0) - (a.size || 0) || String(a.id).localeCompare(String(b.id))
+    );
+    return new Set(ranked.slice(0, ALWAYS_LABELED).map((n) => n.id));
+  }, [filtered.nodes]);
 
   // A stable signature of the visible node IDs (not just their count) so the
   // layout re-fits when a filter swaps to a different same-size node set, plus
@@ -94,7 +109,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search nodes…"
           aria-label="Search nodes by label"
-          className="w-48 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:border-slate-400"
+          className="input w-full sm:w-48"
         />
       </div>
 
@@ -116,7 +131,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
               aria-pressed={active}
               aria-label={`${active ? "Hide" : "Show"} ${NODE_LABELS[t]} nodes`}
               className={clsx(
-                "chip transition cursor-pointer",
+                "chip transition cursor-pointer min-h-[44px]",
                 active
                   ? NODE_CHIP_CLASSES[t]
                   : "bg-white text-slate-600 ring-1 ring-slate-200 line-through opacity-70"
@@ -134,7 +149,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
 
       <div
         ref={containerRef}
-        className={`relative h-[520px] bg-slate-50/40 ${
+        className={`relative h-chart-sm md:h-chart-lg bg-slate-50/40 ${
           hoverId ? "cursor-pointer" : "cursor-default"
         }`}
         style={{
@@ -145,6 +160,14 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
         role="img"
         aria-label={`Force-directed network of ${nodes.length} nodes across ${NODE_TYPES.length} types. The ranked opportunities table below carries the same scored insights for keyboard or screen-reader use.`}
       >
+        <button
+          type="button"
+          onClick={() => fgRef.current?.zoomToFit?.(400, 60)}
+          className="btn-secondary btn-sm absolute right-3 top-3 z-dropdown shadow-card min-h-[44px]"
+          aria-label="Reset zoom and fit the whole network in view"
+        >
+          Reset view
+        </button>
         {width > 0 && (
           <ForceGraph2D
             ref={fgRef}
@@ -158,13 +181,28 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
             linkColor={() => "rgba(100,116,139,0.35)"}
             linkWidth={(l) => Math.min(4, 0.5 + (l.weight || 1) * 0.5)}
             linkDirectionalParticles={0}
-            cooldownTicks={120}
+            // Reduced-motion: pre-run the layout off-frame (warmupTicks) and
+            // stop immediately (cooldownTicks=0) so the graph renders settled
+            // with no visible drift. Otherwise animate the settle as usual.
+            warmupTicks={prefersReducedMotion ? 120 : 0}
+            cooldownTicks={prefersReducedMotion ? 0 : 120}
             onNodeHover={(n) => setHoverId(n?.id || null)}
             onNodeClick={(n) => onSelectNode?.(n)}
             nodeCanvasObjectMode={() => "after"}
             nodeCanvasObject={(node, ctx, globalScale) => {
               const isHover = node.id === hoverId;
               const isSelected = node.id === selectedNode?.id;
+              // Always-on subtle ring so every node has a >=3:1 edge against the
+              // ~#f8fafc graph background (WCAG 1.4.11). Light fills (feature,
+              // pricing, opportunity) measure <3:1 on their own; this slate-500
+              // outline (#64748b, ~4.6:1 on the bg) guarantees a visible boundary
+              // regardless of fill. Hover/selection draw a heavier ring on top.
+              const baseR = Math.max(4, node.size / 3);
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, baseR, 0, 2 * Math.PI, false);
+              ctx.strokeStyle = "#64748b";
+              ctx.lineWidth = 1;
+              ctx.stroke();
               if (isHover || isSelected) {
                 ctx.beginPath();
                 ctx.arc(
@@ -179,7 +217,8 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
                 ctx.lineWidth = isSelected ? 2 : 1.5;
                 ctx.stroke();
               }
-              if (globalScale > 1.2 || isHover || isSelected) {
+              const alwaysLabeled = alwaysLabeledIds.has(node.id);
+              if (globalScale > 1.2 || isHover || isSelected || alwaysLabeled) {
                 const fontSize = Math.max(10, 12 / globalScale);
                 ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
                 ctx.fillStyle = "#0f172a";
