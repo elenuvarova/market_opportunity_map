@@ -99,11 +99,14 @@ export default function OpportunityBrief() {
     setLoading(true);
     setError(null);
     if (source === "session") {
-      // Pasted or CSV data — read from this tab's sessionStorage and compute locally
+      // Pasted or CSV data — read the snapshot the dashboard stashed in the
+      // browser's localStorage (shared across same-origin tabs, so this works
+      // even though the brief link is rel="noopener"). The brief itself was
+      // precomputed by the backend and embedded per opportunity.
       const stash = loadCurrentData();
       if (!stash?.data?.opportunities) {
         setError(
-          "No data found in this tab. Open the brief from the dashboard where the data is loaded."
+          "No data found. Open the brief from the dashboard after loading your data."
         );
         setLoading(false);
         return;
@@ -116,7 +119,7 @@ export default function OpportunityBrief() {
       }
       // The brief is embedded in the /analyze|/assemble response (built by the
       // Python backend — same logic as the demo /brief endpoint). Older
-      // sessionStorage snapshots from before this format won't carry it.
+      // browser-storage snapshots from before this format won't carry it.
       if (!opp.brief) {
         setError("Reload the dashboard and re-import your data to generate this brief.");
         setLoading(false);

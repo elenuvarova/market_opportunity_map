@@ -190,7 +190,7 @@ Click **Paste** in the header. A modal with three tabs opens:
 
 Submit → backend assembles a minimal dataset and the dashboard renders against it. A yellow banner over the graph makes the lower fidelity explicit; the **Brief →** flow works on pasted opportunities too (with the pasted text as the supporting signal).
 
-Pasted data lives in your browser tab's `sessionStorage` only. No server-side persistence, no database. Reloading the main page clears the dashboard — re-paste to restart. The brief page opened in a new tab inherits the snapshot at click time and stays readable independently.
+Pasted data lives in your browser's `localStorage` only — no server-side persistence, no database. It's cleared when you hit **Reset** and overwritten whenever you load new data. `localStorage` (rather than `sessionStorage`) is what lets the **Brief →** one-pager, which opens in a new tab via a `rel="noopener"` link, read the same snapshot — `noopener` severs the per-tab `sessionStorage` clone, but `localStorage` is shared across same-origin tabs.
 
 ## Local development
 

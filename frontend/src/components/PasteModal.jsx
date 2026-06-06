@@ -187,7 +187,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
 
         <footer className="px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between gap-3 flex-shrink-0">
           <p className="text-2xs text-ink-muted">
-            Data lives in this browser tab only. Reload or close = lose it.
+            Stays in your browser only — no server. Loading new data or Reset clears it.
           </p>
           <div className="flex items-center gap-2">
             <button

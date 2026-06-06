@@ -18,7 +18,7 @@ function useBreakdown(opportunity, datasetKey) {
     if (!datasetKey) {
       // Session data (CSV/paste): the breakdown is embedded in the
       // /analyze|/assemble response (Python is the single source of truth, so
-      // the score here always matches the ranked table). Older sessionStorage
+      // the score here always matches the ranked table). Older browser-storage
       // snapshots from before this format won't have it.
       if (opportunity.breakdown) {
         setData(opportunity.breakdown);
