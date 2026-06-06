@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import App from "./App.jsx";
+import ChunkErrorBoundary from "./components/ChunkErrorBoundary.jsx";
 import "./index.css";
 
 // The brief is its own print-oriented route that shares NONE of the dashboard's
@@ -29,13 +30,15 @@ function RouteFallback() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/opportunity/:id/brief" element={<OpportunityBrief />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+    <ChunkErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<App />} />
+            <Route path="/opportunity/:id/brief" element={<OpportunityBrief />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ChunkErrorBoundary>
   </React.StrictMode>
 );
