@@ -7,6 +7,7 @@ import {
   NODE_TYPES,
   NODE_CHIP_CLASSES,
 } from "../lib/nodeStyles";
+import { NEUTRALS, neutralRgba } from "../lib/tokens";
 import { usePrefersReducedMotion } from "../lib/usePrefersReducedMotion";
 
 // How many of the largest nodes always show a label (regardless of zoom). Keeps
@@ -131,7 +132,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
               aria-pressed={active}
               aria-label={`${active ? "Hide" : "Show"} ${NODE_LABELS[t]} nodes`}
               className={clsx(
-                "chip transition cursor-pointer min-h-[44px]",
+                "chip transition cursor-pointer min-h-touch",
                 active
                   ? NODE_CHIP_CLASSES[t]
                   : "bg-white text-slate-600 ring-1 ring-slate-200 line-through opacity-70"
@@ -139,7 +140,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
             >
               <span
                 className="inline-block h-2 w-2 rounded-full mr-1.5"
-                style={{ background: active ? NODE_COLORS[t] : "#cbd5e1" }}
+                style={{ background: active ? NODE_COLORS[t] : NEUTRALS.slate300 }}
               />
               {NODE_LABELS[t]}
             </button>
@@ -153,8 +154,10 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
           hoverId ? "cursor-pointer" : "cursor-default"
         }`}
         style={{
-          backgroundImage:
-            "radial-gradient(circle, rgb(203 213 225 / 0.4) 1px, transparent 1px)",
+          backgroundImage: `radial-gradient(circle, ${neutralRgba(
+            "slate300",
+            0.4
+          )} 1px, transparent 1px)`,
           backgroundSize: "18px 18px",
         }}
         role="img"
@@ -163,7 +166,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
         <button
           type="button"
           onClick={() => fgRef.current?.zoomToFit?.(400, 60)}
-          className="btn-secondary btn-sm absolute right-3 top-3 z-dropdown shadow-card min-h-[44px]"
+          className="btn-secondary btn-sm absolute right-3 top-3 z-dropdown shadow-card min-h-touch"
           aria-label="Reset zoom and fit the whole network in view"
         >
           Reset view
@@ -177,8 +180,8 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
             backgroundColor="rgba(0,0,0,0)"
             nodeRelSize={4}
             nodeVal={(n) => Math.max(3, n.size / 4)}
-            nodeColor={(n) => NODE_COLORS[n.type] || "#94a3b8"}
-            linkColor={() => "rgba(100,116,139,0.35)"}
+            nodeColor={(n) => NODE_COLORS[n.type] || NEUTRALS.slate400}
+            linkColor={() => neutralRgba("slate500", 0.35)}
             linkWidth={(l) => Math.min(4, 0.5 + (l.weight || 1) * 0.5)}
             linkDirectionalParticles={0}
             // Reduced-motion: pre-run the layout off-frame (warmupTicks) and
@@ -200,7 +203,7 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
               const baseR = Math.max(4, node.size / 3);
               ctx.beginPath();
               ctx.arc(node.x, node.y, baseR, 0, 2 * Math.PI, false);
-              ctx.strokeStyle = "#64748b";
+              ctx.strokeStyle = NEUTRALS.slate500;
               ctx.lineWidth = 1;
               ctx.stroke();
               if (isHover || isSelected) {
@@ -213,15 +216,15 @@ export default function NetworkMap({ nodes, edges, onSelectNode, selectedNode })
                   2 * Math.PI,
                   false
                 );
-                ctx.strokeStyle = isSelected ? "#0f172a" : "#64748b";
+                ctx.strokeStyle = isSelected ? NEUTRALS.ink : NEUTRALS.slate500;
                 ctx.lineWidth = isSelected ? 2 : 1.5;
                 ctx.stroke();
               }
               const alwaysLabeled = alwaysLabeledIds.has(node.id);
               if (globalScale > 1.2 || isHover || isSelected || alwaysLabeled) {
                 const fontSize = Math.max(10, 12 / globalScale);
-                ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
-                ctx.fillStyle = "#0f172a";
+                ctx.font = `${fontSize}px "Inter Variable", Inter, system-ui, sans-serif`;
+                ctx.fillStyle = NEUTRALS.ink;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
                 ctx.fillText(

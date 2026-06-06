@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 @layer base {
-  html {
+  html,
+  body {
     font-family: theme("fontFamily.sans");
+    /* Inter OpenType features formerly enabled by the rsms.me CDN stylesheet
+       (cv11 = single-story a, ss01 = alternate digits). Self-hosted
+       @fontsource-variable/inter ships the glyphs but not these defaults, so
+       set them here. tabular-nums (font-variant-numeric) is natively supported
+       by the variable font and applies independently of this. */
+    font-feature-settings: "cv11", "ss01";
   }
   body {
     color: theme("colors.ink.DEFAULT");

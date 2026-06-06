@@ -38,7 +38,7 @@ export default function HeaderOverflowMenu({ disabled, onPaste, onTour, onReset 
     <div className="relative" ref={ref}>
       <button
         type="button"
-        className="btn-ghost min-h-[44px]"
+        className="btn-ghost min-h-touch"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         aria-haspopup="menu"
@@ -69,7 +69,7 @@ export default function HeaderOverflowMenu({ disabled, onPaste, onTour, onReset 
               role="menuitem"
               onClick={() => run(it.action)}
               disabled={disabled}
-              className="w-full text-left rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
+              className="w-full text-left rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-slate-50 disabled:opacity-50 min-h-touch"
             >
               {it.label}
             </button>

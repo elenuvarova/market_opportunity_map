@@ -10,8 +10,13 @@ export default function DemoMenu({ onPick, disabled, loading, activeKey }) {
     const onDocClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
@@ -47,6 +52,7 @@ export default function DemoMenu({ onPick, disabled, loading, activeKey }) {
               <button
                 key={d.key}
                 type="button"
+                role="menuitem"
                 onClick={() => {
                   setOpen(false);
                   onPick(d.key);

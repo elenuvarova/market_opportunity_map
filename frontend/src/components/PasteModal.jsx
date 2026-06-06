@@ -110,7 +110,7 @@ export default function PasteModal({ open, onClose, onSubmit }) {
           <button
             type="button"
             onClick={onClose}
-            className="btn-ghost text-xs min-h-[44px] min-w-[44px] p-0"
+            className="btn-ghost text-xs min-h-touch min-w-touch p-0"
             aria-label="Close paste modal"
           >
             <span aria-hidden="true">✕</span>

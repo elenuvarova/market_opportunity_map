@@ -39,7 +39,7 @@ function OnePagerLink({ href, tourId }) {
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       data-tour-id={tourId}
-      className="btn-secondary btn-sm min-h-[44px]"
+      className="btn-secondary btn-sm min-h-touch"
     >
       Open one-pager →
     </a>

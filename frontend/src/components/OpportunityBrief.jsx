@@ -210,7 +210,7 @@ export default function OpportunityBrief() {
                 <div className="text-xs uppercase tracking-wide text-ink-muted">
                   Opportunity score
                 </div>
-                <div className="text-4xl font-semibold tabular-nums text-ink leading-none">
+                <div className="text-3xl font-semibold tabular-nums text-ink leading-none">
                   {sb.score}
                   <span className="text-base text-ink-muted ml-1">/100</span>
                 </div>

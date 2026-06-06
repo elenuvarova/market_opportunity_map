@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { nodeColorRgba } from "../lib/tokens";
 
 export default function CompetitorFeatureHeatmap({ data }) {
   const { competitors, features, has } = useMemo(() => {
@@ -42,24 +43,33 @@ export default function CompetitorFeatureHeatmap({ data }) {
             Filled cells = competitor has the feature. Darker columns = crowded areas.
           </p>
         </div>
-        {/* Inline legend so the opacity ramp reads without hovering. */}
-        <div className="flex items-center gap-2 text-2xs text-ink-muted" aria-hidden="true">
-          <span>Fewer</span>
-          <span className="flex items-center gap-0.5">
+        {/* Inline legend so the opacity ramp reads without hovering. The ramp
+            itself is decorative (aria-hidden), but the container carries a text
+            equivalent so the meaning isn't color-only for AT. */}
+        <div
+          className="flex items-center gap-2 text-2xs text-ink-muted"
+          role="img"
+          aria-label="Cell shade shows how many competitors cover a feature: lighter = fewer, darker = more."
+        >
+          <span aria-hidden="true">Fewer</span>
+          <span className="flex items-center gap-0.5" aria-hidden="true">
             {[0.35, 0.55, 0.75, 1].map((o) => (
               <span
                 key={o}
-                className="h-3 w-4 rounded-sm border border-slate-200"
-                style={{ background: `rgba(168, 85, 247, ${o})` }}
+                className="h-3 w-4 rounded-md border border-slate-200"
+                style={{ background: nodeColorRgba("competitor", o) }}
               />
             ))}
           </span>
-          <span>More competitors</span>
+          <span aria-hidden="true">More competitors</span>
         </div>
       </div>
 
       <div className="overflow-auto">
-        <table className="text-xs border-separate border-spacing-0">
+        {/* mx-auto centers the table when it's narrower than the card (common at
+            lg, where the matrix sets the column height) so the card isn't
+            half-empty; it still scrolls horizontally when it overflows. */}
+        <table className="mx-auto text-xs border-separate border-spacing-0">
           <thead>
             <tr>
               <th
@@ -119,9 +129,9 @@ export default function CompetitorFeatureHeatmap({ data }) {
                         }`}
                         style={
                           present
-                            ? // competitor-purple (#a855f7) matches the network-map
-                              // competitor node color — darker = more crowded.
-                              { background: `rgba(168, 85, 247, ${opacity})` }
+                            ? // competitor-purple matches the network-map competitor
+                              // node color (single-sourced) — darker = more crowded.
+                              { background: nodeColorRgba("competitor", opacity) }
                             : undefined
                         }
                         title={`${c} → ${f}`}

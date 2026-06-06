@@ -57,11 +57,20 @@ export default {
       maxWidth: {
         drawer: "480px",
       },
+      // WCAG 2.5.5 / pointer-target minimum. Replaces scattered min-h-[44px]/
+      // min-w-[44px] arbitrary values: use min-h-touch / min-w-touch.
+      minHeight: {
+        touch: "44px",
+      },
+      minWidth: {
+        touch: "44px",
+      },
       spacing: {
         "accent-bar": "3px",
       },
       fontFamily: {
         sans: [
+          '"Inter Variable"',
           "Inter",
           "system-ui",
           "-apple-system",

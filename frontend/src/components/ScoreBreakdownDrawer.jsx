@@ -88,7 +88,7 @@ function ComponentBar({ component, totalScore }) {
 function Signal({ signal }) {
   const isExternal = /^https?:\/\//i.test(signal.url || "");
   return (
-    <li className="surface p-3 hover:border-slate-300 transition">
+    <li className="surface hover:border-slate-300 transition">
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className="chip chip-neutral">{signal.source_type}</span>
         {isExternal ? (
@@ -201,7 +201,7 @@ export default function ScoreBreakdownDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-ghost text-xs flex-shrink-0 min-h-[44px] min-w-[44px] p-0"
+                className="btn-ghost text-xs flex-shrink-0 min-h-touch min-w-touch p-0"
                 aria-label="Close drawer"
               >
                 <span aria-hidden="true">✕</span>

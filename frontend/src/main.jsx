@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import App from "./App.jsx";
 import ChunkErrorBoundary from "./components/ChunkErrorBoundary.jsx";
+import "@fontsource-variable/inter";
 import "./index.css";
 
 // The brief is its own print-oriented route that shares NONE of the dashboard's
