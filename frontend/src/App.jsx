@@ -1,23 +1,59 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { analyzeCsv, loadDemoData, DEMO_DATASETS } from "./lib/api";
 import FileUpload from "./components/FileUpload";
 import EmptyState from "./components/EmptyState";
 import ErrorMessage from "./components/ErrorMessage";
 import SummaryCards from "./components/SummaryCards";
-import NetworkMap from "./components/NetworkMap";
 import NodeDetailsPanel from "./components/NodeDetailsPanel";
-import OpportunityMatrix from "./components/OpportunityMatrix";
-import CompetitorFeatureHeatmap from "./components/CompetitorFeatureHeatmap";
 import OpportunitiesTable from "./components/OpportunitiesTable";
 import DemoMenu from "./components/DemoMenu";
 import ScoreBreakdownDrawer from "./components/ScoreBreakdownDrawer";
 import DashboardSkeleton from "./components/DashboardSkeleton";
-import TourController, { isTourAvailable } from "./components/TourController";
 import PasteModal from "./components/PasteModal";
 import HeaderOverflowMenu from "./components/HeaderOverflowMenu";
 import { saveCurrentData, clearCurrentData } from "./lib/sessionStore";
+import { isTourAvailable } from "./lib/tourScripts";
 import { NODE_COLORS } from "./lib/tokens";
+
+// Heavy, below-the-fold or conditional pieces are code-split so the initial
+// dashboard paint doesn't download their vendor stacks:
+//   NetworkMap            -> react-force-graph-2d + d3 (the single biggest dep)
+//   OpportunityMatrix     -> recharts (scatter chart)
+//   CompetitorFeatureHeatmap is plain DOM but lives in the same chart row, so we
+//     keep it eager (no heavy dep) — only the recharts one is split.
+//   TourController        -> driver.js, loaded only when the tour starts.
+const NetworkMap = lazy(() => import("./components/NetworkMap"));
+const OpportunityMatrix = lazy(() => import("./components/OpportunityMatrix"));
+const CompetitorFeatureHeatmap = lazy(() =>
+  import("./components/CompetitorFeatureHeatmap")
+);
+const TourController = lazy(() => import("./components/TourController"));
+
+// Lightweight Suspense fallbacks matching the DashboardSkeleton aesthetic
+// (animate-pulse on slate fills) so swapping in the real component causes no
+// layout jank. Heights mirror the live components' fixed visual area.
+function ChartFallback({ heightClass = "h-64" }) {
+  return (
+    <div className="card p-5" aria-busy="true" aria-live="polite">
+      <div className="h-4 w-32 rounded bg-slate-200/70 animate-pulse" />
+      <div className="mt-2 h-3 w-56 rounded bg-slate-200/70 animate-pulse" />
+      <div className={`mt-4 ${heightClass} rounded-lg bg-slate-100/80 animate-pulse`} />
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
+
+function NetworkMapFallback() {
+  return (
+    <div className="card p-5" aria-busy="true" aria-live="polite">
+      <div className="h-4 w-40 rounded bg-slate-200/70 animate-pulse" />
+      <div className="mt-2 h-3 w-64 rounded bg-slate-200/70 animate-pulse" />
+      <div className="mt-4 h-[480px] rounded-lg bg-slate-100/80 animate-pulse" />
+      <span className="sr-only">Loading network map…</span>
+    </div>
+  );
+}
 
 // The tour anchors and copy are desktop-tuned; only offer it at md+ where the
 // graph it highlights is laid out as designed.
@@ -287,12 +323,14 @@ export default function App() {
             <h2 className="sr-only">Network map and node details</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <NetworkMap
-                  nodes={data.nodes}
-                  edges={data.edges}
-                  onSelectNode={setSelectedNode}
-                  selectedNode={selectedNode}
-                />
+                <Suspense fallback={<NetworkMapFallback />}>
+                  <NetworkMap
+                    nodes={data.nodes}
+                    edges={data.edges}
+                    onSelectNode={setSelectedNode}
+                    selectedNode={selectedNode}
+                  />
+                </Suspense>
               </div>
               <div>
                 {selectedNode ? (
@@ -342,8 +380,12 @@ export default function App() {
 
             <h2 className="sr-only">Opportunity matrix and competitor coverage</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <OpportunityMatrix matrix={data.matrix} />
-              <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
+              <Suspense fallback={<ChartFallback />}>
+                <OpportunityMatrix matrix={data.matrix} />
+              </Suspense>
+              <Suspense fallback={<ChartFallback />}>
+                <CompetitorFeatureHeatmap data={data.competitor_feature_matrix} />
+              </Suspense>
             </div>
 
             {/* Decision-ready table last — what a PM walks away with. */}
@@ -375,13 +417,15 @@ export default function App() {
       />
 
       {tourRunning && data && (
-        <TourController
-          data={data}
-          datasetKey={activeDemoKey}
-          onSelectNode={setSelectedNode}
-          onSelectOpportunity={setSelectedOpportunity}
-          onClose={() => setTourRunning(false)}
-        />
+        <Suspense fallback={null}>
+          <TourController
+            data={data}
+            datasetKey={activeDemoKey}
+            onSelectNode={setSelectedNode}
+            onSelectOpportunity={setSelectedOpportunity}
+            onClose={() => setTourRunning(false)}
+          />
+        </Suspense>
       )}
 
       <PasteModal
