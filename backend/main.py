@@ -236,7 +236,11 @@ def assemble_from_paste(request: Request, payload: AssembleRequest) -> dict:
         raise HTTPException(status_code=422, detail=detail)
     df = pd.DataFrame(rows)
     try:
-        return analyze_market_data(df)
+        # include_details: embed per-opportunity breakdown + brief. This result
+        # lives only in the browser's sessionStorage (no server roundtrip per
+        # opportunity), so the client reads the embedded payload instead of
+        # recomputing scores in JS — Python stays the single source of truth.
+        return analyze_market_data(df, include_details=True)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -280,7 +284,10 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> dict:
         )
 
     try:
-        return analyze_market_data(df)
+        # include_details: embed per-opportunity breakdown + brief (CSV results
+        # live only in the browser, so the client reads these instead of
+        # recomputing scores in JS).
+        return analyze_market_data(df, include_details=True)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

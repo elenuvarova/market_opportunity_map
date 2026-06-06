@@ -230,10 +230,14 @@ _DEFAULT_OPEN_QUESTIONS = [
 ]
 
 
-def build_brief(row: dict, df: pd.DataFrame) -> dict:
+def build_brief(row: dict, df: pd.DataFrame, sources: list[dict] | None = None) -> dict:
     """Compose a one-page opportunity brief: title, one-liner, score block,
-    top signals, competitive landscape, open questions, recommended next step."""
-    breakdown = build_breakdown(row)
+    top signals, competitive landscape, open questions, recommended next step.
+
+    `sources`, when given, are already-enriched/merged signals (used when
+    embedding the brief for a deduped opportunity that merged several rows);
+    otherwise the single row's own sources are enriched."""
+    breakdown = build_breakdown(row, sources=sources)
     bucket_key = breakdown["bucket_key"]
 
     landscape = build_competitive_landscape(df, row["segment"])
@@ -276,7 +280,7 @@ def build_brief(row: dict, df: pd.DataFrame) -> dict:
     }
 
 
-def build_breakdown(row: dict) -> dict:
+def build_breakdown(row: dict, sources: list[dict] | None = None) -> dict:
     score = int(row["opportunity_score"])
     bucket_key, bucket_label = decision_bucket(score)
     return {
@@ -295,7 +299,9 @@ def build_breakdown(row: dict) -> dict:
             row["competition_intensity"],
             row["evidence_count"],
         ),
-        "supporting_signals": _enrich_sources(row.get("sources", [])),
+        "supporting_signals": (
+            sources if sources is not None else _enrich_sources(row.get("sources", []))
+        ),
     }
 
 
@@ -432,17 +438,25 @@ def build_competitor_feature_matrix(df: pd.DataFrame) -> list[dict]:
     ]
 
 
-def build_opportunities(df: pd.DataFrame) -> list[dict]:
+def build_opportunities(df: pd.DataFrame, include_details: bool = False) -> list[dict]:
     """One row per opportunity id (slug of name). When the dataset
     cross-joins a pain across multiple competitors (common in pasted
-    input), we keep the row with the highest score and merge sources."""
+    input), we keep the row with the highest score and merge sources.
+
+    When `include_details`, each opportunity also carries a precomputed
+    `breakdown` and `brief` (same shape as the /breakdown and /brief
+    endpoints) so the client never recomputes scores in JS — the Python
+    formula stays the single source of truth. Used for /analyze and
+    /assemble, whose results live only in the browser's sessionStorage."""
     ranked = df.sort_values("opportunity_score", ascending=False)
     seen: dict[str, dict] = {}
+    rep_rows: dict[str, dict] = {}
     for _, row in ranked.iterrows():
         oid = slugify(row["opportunity"])
         if oid in seen:
             seen[oid]["sources"].extend(_enrich_sources(row.get("sources", [])))
             continue
+        rep_rows[oid] = row.to_dict()  # highest-score row = the representative
         seen[oid] = {
             "id": oid,
             "opportunity": row["opportunity"],
@@ -467,6 +481,12 @@ def build_opportunities(df: pd.DataFrame) -> list[dict]:
             seen_urls.add(s["url"])
             unique.append(s)
         o["sources"] = unique
+    if include_details:
+        # Reuse the representative (highest-score) row + the merged, deduped
+        # sources so the embedded score matches the ranked table exactly.
+        for oid, o in seen.items():
+            o["breakdown"] = build_breakdown(rep_rows[oid], sources=o["sources"])
+            o["brief"] = build_brief(rep_rows[oid], df, sources=o["sources"])
     return list(seen.values())
 
 
@@ -489,7 +509,7 @@ def build_matrix(df: pd.DataFrame) -> list[dict]:
     return list(seen.values())
 
 
-def analyze_market_data(df: pd.DataFrame) -> dict:
+def analyze_market_data(df: pd.DataFrame, include_details: bool = False) -> dict:
     validate_dataframe(df)
     df = clean_dataframe(df)
     if df.empty:
@@ -502,7 +522,7 @@ def analyze_market_data(df: pd.DataFrame) -> dict:
         "summary": calculate_summary(df),
         "nodes": nodes,
         "edges": edges,
-        "opportunities": build_opportunities(df),
+        "opportunities": build_opportunities(df, include_details=include_details),
         "matrix": build_matrix(df),
         "competitor_feature_matrix": build_competitor_feature_matrix(df),
     }

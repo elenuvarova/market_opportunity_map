@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { getOpportunityBreakdown } from "../lib/api";
-import { computeBreakdown } from "../lib/scoring";
 import { decisionByKey, COMPONENT_BAR_COLORS } from "../lib/decisionStyles";
 import { setupFocusTrap } from "../lib/focusTrap";
 import { useOverlayLock } from "../lib/useOverlayLock";
@@ -17,8 +16,17 @@ function useBreakdown(opportunity, datasetKey) {
       return;
     }
     if (!datasetKey) {
-      setData(computeBreakdown(opportunity));
-      setError(null);
+      // Session data (CSV/paste): the breakdown is embedded in the
+      // /analyze|/assemble response (Python is the single source of truth, so
+      // the score here always matches the ranked table). Older sessionStorage
+      // snapshots from before this format won't have it.
+      if (opportunity.breakdown) {
+        setData(opportunity.breakdown);
+        setError(null);
+      } else {
+        setData(null);
+        setError("Re-import your data to see the score breakdown.");
+      }
       setLoading(false);
       return;
     }
@@ -31,9 +39,8 @@ function useBreakdown(opportunity, datasetKey) {
       })
       .catch((err) => {
         if (!cancelled) {
-          // Fall back to local computation if the API can't reach us
-          setData(computeBreakdown(opportunity));
-          setError(`${err.message} — showing local breakdown.`);
+          setData(null);
+          setError(err.message);
         }
       })
       .finally(() => {

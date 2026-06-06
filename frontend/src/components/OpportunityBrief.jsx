@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { getOpportunityBrief } from "../lib/api";
 import { briefToMarkdown } from "../lib/markdown";
 import { loadCurrentData } from "../lib/sessionStore";
-import { computeBriefLocally } from "../lib/brief";
 import { decisionByKey, COMPONENT_BAR_COLORS } from "../lib/decisionStyles";
 
 function ComponentBar({ component, totalScore }) {
@@ -115,7 +114,15 @@ export default function OpportunityBrief() {
         setLoading(false);
         return;
       }
-      setBrief(computeBriefLocally(opp, stash.data.opportunities));
+      // The brief is embedded in the /analyze|/assemble response (built by the
+      // Python backend — same logic as the demo /brief endpoint). Older
+      // sessionStorage snapshots from before this format won't carry it.
+      if (!opp.brief) {
+        setError("Reload the dashboard and re-import your data to generate this brief.");
+        setLoading(false);
+        return;
+      }
+      setBrief(opp.brief);
       setLoading(false);
       return;
     }

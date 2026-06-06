@@ -191,6 +191,44 @@ def test_build_opportunities_dedup_keeps_highest_score():
 
 
 # --------------------------------------------------------------------------- #
+# include_details: per-opportunity breakdown + brief embedded for /analyze and
+# /assemble (so the client never recomputes scores in JS).
+# --------------------------------------------------------------------------- #
+
+def test_opportunities_have_no_details_by_default():
+    # /demo path stays lean — no embedded breakdown/brief.
+    res = analyze_market_data(pd.DataFrame(DEMO_DATASETS["product"]["rows"]))
+    assert all("breakdown" not in o and "brief" not in o for o in res["opportunities"])
+
+
+def test_include_details_embeds_breakdown_and_brief():
+    res = analyze_market_data(
+        pd.DataFrame(DEMO_DATASETS["product"]["rows"]), include_details=True
+    )
+    for o in res["opportunities"]:
+        assert "breakdown" in o and "brief" in o
+        # Anti-drift: the embedded score must equal the ranked-table score.
+        assert o["breakdown"]["score"] == o["opportunity_score"]
+        assert o["brief"]["score_block"]["score"] == o["opportunity_score"]
+        assert len(o["breakdown"]["components"]) == 4
+
+
+def test_include_details_score_matches_for_crossjoined_opportunity():
+    # When a pain cross-joins across competitors, the embedded breakdown must use
+    # the highest-score representative row (matching build_opportunities), not an
+    # arbitrary first match.
+    df = clean_dataframe(pd.DataFrame([
+        make_row(opportunity="Dup", sev=4, wtp=3, comp=8, ev=2),   # low score
+        make_row(opportunity="Dup", sev=9, wtp=9, comp=2, ev=5),   # high score
+    ]))
+    df = calculate_opportunity_scores(df)
+    opps = build_opportunities(df, include_details=True)
+    dup = next(o for o in opps if o["opportunity"] == "Dup")
+    assert dup["breakdown"]["score"] == dup["opportunity_score"]
+    assert dup["brief"]["score_block"]["score"] == dup["opportunity_score"]
+
+
+# --------------------------------------------------------------------------- #
 # End-to-end on the demo datasets (ground truth for the case study)
 # --------------------------------------------------------------------------- #
 
