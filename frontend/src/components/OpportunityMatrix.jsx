@@ -8,28 +8,41 @@ import {
   YAxis,
   ZAxis,
   ReferenceLine,
-  Cell,
-  LabelList,
 } from "recharts";
 import { DECISION_COLORS } from "../lib/tokens";
 
-// Legend rows reuse the named decision buckets used everywhere else (table chip,
-// drawer badge, brief) so the matrix reads in the same language. Color alone is
-// insufficient (WCAG 1.4.1) — every point also carries its score as a label.
-const LEGEND = [
-  { label: "Strong", range: "≥75", color: DECISION_COLORS.strong },
-  { label: "Worth validating", range: "60–74", color: DECISION_COLORS.validate },
-  { label: "Needs research", range: "40–59", color: DECISION_COLORS.research },
-  { label: "Low", range: "<40", color: DECISION_COLORS.low },
+// Decision bands carry BOTH a color and a distinct point SHAPE. Color alone is
+// insufficient (WCAG 1.4.1), and numeric per-point labels can't be used here:
+// multiple opportunities often share the exact same (severity, competition) cell,
+// so their labels would print on top of each other. Shape is a non-color channel
+// that survives overlapping points; exact scores live in the tooltip and the
+// adjacent (fully accessible) opportunities table. Thresholds + colors mirror
+// decisionStyles / lib/tokens (single source of truth).
+const BANDS = [
+  { key: "strong", label: "Strong", range: "≥75", shape: "star", color: DECISION_COLORS.strong, test: (s) => s >= 75 },
+  { key: "validate", label: "Worth validating", range: "60–74", shape: "circle", color: DECISION_COLORS.validate, test: (s) => s >= 60 && s < 75 },
+  { key: "research", label: "Needs research", range: "40–59", shape: "diamond", color: DECISION_COLORS.research, test: (s) => s >= 40 && s < 60 },
+  { key: "low", label: "Low", range: "<40", shape: "triangle", color: DECISION_COLORS.low, test: (s) => s < 40 },
 ];
 
-// Recharts needs raw hex, not Tailwind classnames. Colors come from the single
-// source of truth (lib/tokens.js). Thresholds mirror decisionStyles.decisionForScore.
-function scoreColor(score) {
-  if (score >= 75) return DECISION_COLORS.strong;
-  if (score >= 60) return DECISION_COLORS.validate;
-  if (score >= 40) return DECISION_COLORS.research;
-  return DECISION_COLORS.low;
+// Tiny inline marker so the legend shows the shape↔band mapping, not just color.
+function LegendMarker({ shape, color }) {
+  const common = { fill: color };
+  let glyph;
+  if (shape === "star") {
+    glyph = <path d="M6 0.5l1.6 3.6 3.9.3-3 2.6.95 3.8L6 9.3 2.6 11.4l.95-3.8-3-2.6 3.9-.3z" {...common} />;
+  } else if (shape === "diamond") {
+    glyph = <path d="M6 0.5L11.5 6 6 11.5.5 6z" {...common} />;
+  } else if (shape === "triangle") {
+    glyph = <path d="M6 1l5 9.5H1z" {...common} />;
+  } else {
+    glyph = <circle cx="6" cy="6" r="5" {...common} />;
+  }
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+      {glyph}
+    </svg>
+  );
 }
 
 function CustomTooltip({ active, payload }) {
@@ -64,11 +77,11 @@ export default function OpportunityMatrix({ matrix }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
-          {LEGEND.map((l) => (
-            <span key={l.label} className="inline-flex items-center gap-1 whitespace-nowrap">
-              <span className="h-2 w-2 rounded-full" style={{ background: l.color }} />
-              {l.label}
-              <span className="text-ink-muted/70">({l.range})</span>
+          {BANDS.map((b) => (
+            <span key={b.key} className="inline-flex items-center gap-1 whitespace-nowrap">
+              <LegendMarker shape={b.shape} color={b.color} />
+              {b.label}
+              <span className="text-ink-muted/70">({b.range})</span>
             </span>
           ))}
         </div>
@@ -137,20 +150,22 @@ export default function OpportunityMatrix({ matrix }) {
             <ReferenceLine x={5} stroke="#cbd5e1" strokeDasharray="4 4" />
             <ReferenceLine y={5} stroke="#cbd5e1" strokeDasharray="4 4" />
             <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3" }} />
-            <Scatter data={matrix} fillOpacity={0.85}>
-              {matrix.map((d, i) => (
-                <Cell key={i} fill={scoreColor(d.score)} />
-              ))}
-              {/* Non-color channel: every point shows its score, so the
-                  decision bands are legible without relying on hue (WCAG 1.4.1). */}
-              <LabelList
-                dataKey="score"
-                position="top"
-                offset={6}
-                fontSize={10}
-                fill="#0f172a"
-              />
-            </Scatter>
+            {/* One series per decision band: each gets a distinct SHAPE (the
+                non-color channel) plus its band color. Bubble size = evidence. */}
+            {BANDS.map((b) => {
+              const pts = matrix.filter((d) => b.test(d.score));
+              if (!pts.length) return null;
+              return (
+                <Scatter
+                  key={b.key}
+                  name={b.label}
+                  data={pts}
+                  shape={b.shape}
+                  fill={b.color}
+                  fillOpacity={0.85}
+                />
+              );
+            })}
           </ScatterChart>
         </ResponsiveContainer>
       </div>
