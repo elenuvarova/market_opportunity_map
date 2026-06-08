@@ -44,7 +44,7 @@ async function request(path, init) {
     if (text.trim().startsWith("<")) {
       throw new Error(
         "Got HTML instead of JSON — the frontend isn't reaching the API. " +
-          "If this is a Render deploy, set VITE_API_URL on the static site to your backend URL and redeploy."
+          "Check that the API is reachable at /api (same origin), or set VITE_API_URL to your backend URL and rebuild."
       );
     }
     throw new Error("Server returned a non-JSON response.");
