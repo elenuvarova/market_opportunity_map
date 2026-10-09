@@ -105,6 +105,55 @@ async def reject_oversized_bodies(request: Request, call_next):
     return await call_next(request)
 
 
+# --- Security headers ---------------------------------------------------------
+# The CSP is built from what the SPA actually loads: every script, style, font
+# and image is a same-origin hashed asset (Inter is self-hosted via
+# @fontsource), the API is same-origin (/api), and the only third party is the
+# self-hosted Umami counter on stats.ontwrpn.com (script.js + POST /api/send).
+# style-src needs 'unsafe-inline': react-force-graph (force-graph and its
+# float-tooltip) injects its CSS as runtime <style> elements, which a strict
+# style-src blocks (graph container and hover tooltip lose their styling).
+# Hashes would work today but silently break on any dependency bump; inline
+# CSS cannot execute code, and script-src stays strict. No 'unsafe-eval'.
+ANALYTICS_ORIGIN = "https://stats.ontwrpn.com"
+CONTENT_SECURITY_POLICY = "; ".join(
+    [
+        "default-src 'self'",
+        f"script-src 'self' {ANALYTICS_ORIGIN}",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self'",
+        "font-src 'self'",
+        f"connect-src 'self' {ANALYTICS_ORIGIN}",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ]
+)
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    # The app is only reachable over HTTPS (Traefik terminates TLS); browsers
+    # ignore HSTS on plain-HTTP responses, so local dev is unaffected.
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+}
+# FastAPI's Swagger UI / ReDoc pull their JS and CSS from a CDN and use inline
+# scripts, so the strict CSP would blank them. They get every other header.
+CSP_EXEMPT_PATHS = ("/docs", "/redoc")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    if not request.url.path.startswith(CSP_EXEMPT_PATHS):
+        response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+    return response
+
+
 def _allowed_origins() -> Iterable[str]:
     base = [
         "http://localhost:5173",
