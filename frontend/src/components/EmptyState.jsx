@@ -23,6 +23,8 @@ export default function EmptyState({ onTryDemo, onPickFile, onOpenPaste, loading
             type="button"
             disabled={loading}
             onClick={() => onTryDemo(d.key)}
+            data-umami-event="try-demo"
+            data-umami-event-dataset={d.key}
             className="surface text-left hover:border-slate-300 hover:shadow-card transition disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <div className="flex items-center gap-2">
